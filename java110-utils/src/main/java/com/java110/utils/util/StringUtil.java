@@ -7,6 +7,8 @@
 package com.java110.utils.util;
 
 
+import com.alibaba.fastjson.JSONObject;
+
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.regex.Pattern;
@@ -270,6 +272,7 @@ public class StringUtil {
         }
     }
 
+
     /**
      * Description: 获得字符(byte)的实际长度<br>
      * 1、…<br>
@@ -479,5 +482,45 @@ public class StringUtil {
         }
 
         return description;
+    }
+
+    /**
+     * json是否包含key 并且存在值
+     *
+     * @param param
+     * @param key
+     * @return
+     */
+    public static boolean jsonHasKayAndValue(JSONObject param, String key) {
+        if (param == null) {
+            return false;
+        }
+
+        if (!param.containsKey(key)) {
+            return false;
+        }
+
+        if (isEmpty(param.getString(key))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * json是否包含key 并且存在值
+     *
+     * @param param
+     * @param key
+     * @return
+     */
+    public static boolean jsonHasKayAndValue(String param, String key) {
+        JSONObject paramObj = null;
+        try {
+            paramObj = JSONObject.parseObject(param);
+            return jsonHasKayAndValue(paramObj, key);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

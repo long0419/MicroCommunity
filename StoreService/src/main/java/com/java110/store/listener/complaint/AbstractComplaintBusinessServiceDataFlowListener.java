@@ -2,7 +2,7 @@ package com.java110.store.listener.complaint;
 
 import com.alibaba.fastjson.JSONObject;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.store.dao.IComplaintServiceDao;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -83,6 +83,11 @@ public abstract class AbstractComplaintBusinessServiceDataFlowListener extends A
 
         currentComplaintInfo.put("operate", StatusConstant.OPERATE_DEL);
         getComplaintServiceDaoImpl().saveBusinessComplaintInfo(currentComplaintInfo);
+        for(Object key : currentComplaintInfo.keySet()) {
+            if(businessComplaint.get(key) == null) {
+                businessComplaint.put(key.toString(), currentComplaintInfo.get(key));
+            }
+        }
     }
 
 

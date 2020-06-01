@@ -6,6 +6,7 @@ import com.java110.common.dao.IFileRelServiceDao;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.entity.center.Business;
+import com.java110.po.file.FileRelPo;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -61,25 +62,23 @@ public class DeleteFileRelInfoListener extends AbstractFileRelBusinessServiceDat
 
         Assert.notEmpty(data, "没有datas 节点，或没有子节点需要处理");
 
+
         //处理 businessFileRel 节点
-        if (data.containsKey("businessFileRel")) {
-            //处理 businessFileRel 节点
-            if (data.containsKey("businessFileRel")) {
-                Object _obj = data.get("businessFileRel");
-                JSONArray businessFileRels = null;
+        if (data.containsKey(FileRelPo.class.getSimpleName())) {
+            Object _obj = data.get(FileRelPo.class.getSimpleName());
+            JSONArray businessFileRels = null;
+            if (_obj instanceof JSONObject) {
+                businessFileRels = new JSONArray();
+                businessFileRels.add(_obj);
+            } else {
+                businessFileRels = (JSONArray) _obj;
+            }
+            //JSONObject businessFileRel = data.getJSONObject("businessFileRel");
+            for (int _fileRelIndex = 0; _fileRelIndex < businessFileRels.size(); _fileRelIndex++) {
+                JSONObject businessFileRel = businessFileRels.getJSONObject(_fileRelIndex);
+                doBusinessFileRel(business, businessFileRel);
                 if (_obj instanceof JSONObject) {
-                    businessFileRels = new JSONArray();
-                    businessFileRels.add(_obj);
-                } else {
-                    businessFileRels = (JSONArray) _obj;
-                }
-                //JSONObject businessFileRel = data.getJSONObject("businessFileRel");
-                for (int _fileRelIndex = 0; _fileRelIndex < businessFileRels.size(); _fileRelIndex++) {
-                    JSONObject businessFileRel = businessFileRels.getJSONObject(_fileRelIndex);
-                    doBusinessFileRel(business, businessFileRel);
-                    if (_obj instanceof JSONObject) {
-                        dataFlowContext.addParamOut("fileRelId", businessFileRel.getString("fileRelId"));
-                    }
+                    dataFlowContext.addParamOut("fileRelId", businessFileRel.getString("fileRelId"));
                 }
             }
         }

@@ -6,7 +6,7 @@ import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
 import com.java110.community.dao.IFloorServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +43,7 @@ public abstract class AbstractFloorBusinessServiceDataFlowListener extends Abstr
         businessFloorInfo.put("remark", businessFloorInfo.get("remark"));
         businessFloorInfo.put("userId", businessFloorInfo.get("user_id"));
         businessFloorInfo.put("floorNum", businessFloorInfo.get("floor_num"));
+        businessFloorInfo.put("communityId", businessFloorInfo.get("community_id"));
 
         businessFloorInfo.put("statusCd", statusCd);
     }
@@ -73,10 +74,17 @@ public abstract class AbstractFloorBusinessServiceDataFlowListener extends Abstr
         currentFloorInfo.put("remark", currentFloorInfo.get("remark"));
         currentFloorInfo.put("userId", currentFloorInfo.get("user_id"));
         currentFloorInfo.put("floorNum", currentFloorInfo.get("floor_num"));
+        currentFloorInfo.put("communityId", currentFloorInfo.get("community_id"));
 
 
         currentFloorInfo.put("operate", StatusConstant.OPERATE_DEL);
         getFloorServiceDaoImpl().saveBusinessFloorInfo(currentFloorInfo);
+
+        for(Object key : currentFloorInfo.keySet()) {
+            if(businessFloor.get(key) == null) {
+                businessFloor.put(key.toString(), currentFloorInfo.get(key));
+            }
+        }
     }
 
 

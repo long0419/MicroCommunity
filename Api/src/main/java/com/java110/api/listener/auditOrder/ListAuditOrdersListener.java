@@ -4,20 +4,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.java110.api.listener.AbstractServiceApiListener;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
-import com.java110.core.smo.audit.IAuditUserInnerServiceSMO;
 import com.java110.core.smo.common.IResourceEntryStoreInnerServiceSMO;
-import com.java110.core.smo.resourceStore.IResourceStoreInnerServiceSMO;
-import com.java110.dto.auditUser.AuditUserDto;
+import com.java110.dto.purchaseApply.PurchaseApplyDto;
 import com.java110.entity.audit.AuditUser;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeAuditUserConstant;
 import com.java110.utils.util.Assert;
 import com.java110.utils.util.BeanConvertUtil;
-import com.java110.vo.api.auditUser.ApiAuditUserDataVo;
-import com.java110.vo.api.auditUser.ApiAuditUserVo;
 import com.java110.vo.api.resourceOrder.ApiResourceOrderDataVo;
 import com.java110.vo.api.resourceOrder.ApiResourceOrderVo;
-import com.java110.vo.api.resourceStore.ApiResourceStoreDataVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -84,7 +79,21 @@ public class ListAuditOrdersListener extends AbstractServiceApiListener {
         List<ApiResourceOrderDataVo> auditOrders = null;
 
         if (count > 0) {
-            auditOrders = BeanConvertUtil.covertBeanList(resourceEntryStoreInnerServiceSMOImpl.getUserTasks(auditUser), ApiResourceOrderDataVo.class);
+            List<PurchaseApplyDto> purchaseApplyDtos = resourceEntryStoreInnerServiceSMOImpl.getUserTasks(auditUser);
+            auditOrders = BeanConvertUtil.covertBeanList(purchaseApplyDtos, ApiResourceOrderDataVo.class);
+            for( ApiResourceOrderDataVo apiResourceOrderDataVo : auditOrders){
+                switch (apiResourceOrderDataVo.getState()){
+                    case "1000": apiResourceOrderDataVo.setStateName("待审核");break;
+                    case "1001": apiResourceOrderDataVo.setStateName("审核中");break;
+                    case "1002": apiResourceOrderDataVo.setStateName("已审核");break;
+                }
+                if(apiResourceOrderDataVo.getResOrderType().equals("10000")){
+                    apiResourceOrderDataVo.setResOrderTypeName("采购申请");
+                }else{
+                    apiResourceOrderDataVo.setResOrderTypeName("出库申请");
+                }
+
+            }
         } else {
             auditOrders = new ArrayList<>();
         }

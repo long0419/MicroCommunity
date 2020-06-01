@@ -5,7 +5,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.java110.core.base.smo.BaseServiceSMO;
 import com.java110.core.smo.common.IResourceEntryStoreInnerServiceSMO;
+import com.java110.core.smo.purchaseApply.IPurchaseApplyInnerServiceSMO;
 import com.java110.dto.PageDto;
+import com.java110.dto.complaint.ComplaintDto;
+import com.java110.dto.purchaseApply.PurchaseApplyDto;
 import com.java110.dto.resourceStore.ResourceOrderDto;
 import com.java110.entity.audit.AuditUser;
 import org.activiti.engine.ProcessEngine;
@@ -35,6 +38,9 @@ public class ResourceEntryStoreInnerServiceSMOImpl extends BaseServiceSMO implem
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private IPurchaseApplyInnerServiceSMO purchaseApplyInnerServiceSMOImpl;
 
 
     /**
@@ -75,28 +81,59 @@ public class ResourceEntryStoreInnerServiceSMOImpl extends BaseServiceSMO implem
      *
      * @param user 用户信息
      */
-    public List<ResourceOrderDto> getUserTasks(@RequestBody AuditUser user) {
+    public List<PurchaseApplyDto> getUserTasks(@RequestBody AuditUser user) {
         TaskService taskService = processEngine.getTaskService();
         TaskQuery query = taskService.createTaskQuery().processDefinitionKey("resourceEntry");
         query.taskAssignee(user.getUserId());
         query.orderByTaskCreateTime().desc();
         List<Task> list = null;
+        if(user.getPage()  >=1){
+            user.setPage(user.getPage()-1);
+        }
         if (user.getPage() != PageDto.DEFAULT_PAGE) {
             list = query.listPage(user.getPage(), user.getRow());
         }else{
             list = query.list();
         }
 
-        List<ResourceOrderDto> resourceOrderDtos = new ArrayList<>();
+//        List<PurchaseApplyDto> purchaseApplyDtos = new ArrayList<>();
+//
+//        for (Task task : list) {
+//            String id = task.getId();
+//            //System.out.println("tasks:" + JSONObject.toJSONString(task));
+//            PurchaseApplyDto purchaseApplyDto = (PurchaseApplyDto) taskService.getVariable(id, "purchaseApplyDto");
+//            purchaseApplyDto.setTaskId(id);
+//            purchaseApplyDto.setProcessInstanceId(task.getProcessInstanceId());
+//            purchaseApplyDtos.add(purchaseApplyDto);
+//        }
+//        return purchaseApplyDtos;
 
+        List<String> applyOrderIds = new ArrayList<>();
+        Map<String, String> taskBusinessKeyMap = new HashMap<>();
         for (Task task : list) {
-            String id = task.getId();
-            //System.out.println("tasks:" + JSONObject.toJSONString(task));
-            ResourceOrderDto resourceOrderDto = (ResourceOrderDto) taskService.getVariable(id, "resourceOrderDto");
-            resourceOrderDto.setTaskId(id);
-            resourceOrderDtos.add(resourceOrderDto);
+            String processInstanceId = task.getProcessInstanceId();
+            //3.使用流程实例，查询
+            ProcessInstance pi = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+            //4.使用流程实例对象获取BusinessKey
+            String business_key = pi.getBusinessKey();
+            applyOrderIds.add(business_key);
+            taskBusinessKeyMap.put(business_key, task.getId());
         }
-        return resourceOrderDtos;
+
+        if (applyOrderIds == null || applyOrderIds.size() == 0) {
+            return new ArrayList<>();
+        }
+
+        //查询 投诉信息
+        PurchaseApplyDto purchaseApplyDto = new PurchaseApplyDto();
+        purchaseApplyDto.setStoreId(user.getStoreId());
+        purchaseApplyDto.setApplyOrderIds(applyOrderIds.toArray(new String[applyOrderIds.size()]));
+        List<PurchaseApplyDto> tmpPurchaseApplyDtos = purchaseApplyInnerServiceSMOImpl.queryPurchaseApplyAndDetails(purchaseApplyDto);
+
+        for (PurchaseApplyDto tmpPurchaseApplyDto : tmpPurchaseApplyDtos) {
+            tmpPurchaseApplyDto.setTaskId(taskBusinessKeyMap.get(tmpPurchaseApplyDto.getApplyOrderId()));
+        }
+        return tmpPurchaseApplyDtos;
     }
 
     public boolean agreeCompleteTask(@RequestBody ResourceOrderDto resourceOrderDto) {

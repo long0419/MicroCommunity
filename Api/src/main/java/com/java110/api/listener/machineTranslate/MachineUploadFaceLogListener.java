@@ -2,7 +2,7 @@ package com.java110.api.listener.machineTranslate;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.java110.api.listener.AbstractServiceApiListener;
+import com.java110.api.bmo.machineTranslate.IMachineTranslateBMO;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.factory.GenerateCodeFactory;
@@ -11,36 +11,19 @@ import com.java110.core.smo.file.IFileInnerServiceSMO;
 import com.java110.core.smo.file.IFileRelInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IApplicationKeyInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IMachineInnerServiceSMO;
-import com.java110.core.smo.hardwareAdapation.IMachineRecordInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IMachineTranslateInnerServiceSMO;
 import com.java110.core.smo.owner.IOwnerInnerServiceSMO;
-import com.java110.dto.OwnerDto;
-import com.java110.dto.community.CommunityDto;
-import com.java110.dto.file.FileDto;
-import com.java110.dto.file.FileRelDto;
-import com.java110.dto.hardwareAdapation.ApplicationKeyDto;
-import com.java110.dto.hardwareAdapation.MachineDto;
-import com.java110.dto.hardwareAdapation.MachineTranslateDto;
-import com.java110.entity.center.AppService;
-import com.java110.event.service.api.ServiceDataFlowEvent;
-import com.java110.utils.constant.BusinessTypeConstant;
-import com.java110.utils.constant.CommonConstant;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.ServiceCodeMachineTranslateConstant;
 import com.java110.utils.exception.ListenerExecuteException;
-import com.java110.utils.factory.ApplicationContextFactory;
 import com.java110.utils.util.Assert;
-import com.java110.utils.util.DateUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.text.ParseException;
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +36,9 @@ public class MachineUploadFaceLogListener extends BaseMachineListener {
 
     @Autowired
     private IMachineTranslateInnerServiceSMO machineTranslateInnerServiceSMOImpl;
+
+    @Autowired
+    private IMachineTranslateBMO machineTranslateBMOImpl;
 
     @Autowired
     private IMachineInnerServiceSMO machineInnerServiceSMOImpl;
@@ -106,28 +92,17 @@ public class MachineUploadFaceLogListener extends BaseMachineListener {
             outParam.put("code", 0);
             outParam.put("message", "success");
             JSONArray data = null;
-            reqJson.put("communityId", reqHeader.get("communityId"));
+            reqJson.put("communityId", reqJson.containsKey("communityId") ? reqJson.getString("communityId") : reqHeader.get("communityId"));
             HttpHeaders httpHeaders = super.getHeader(context);
 
-            HttpHeaders header = new HttpHeaders();
-            context.getRequestCurrentHeaders().put(CommonConstant.HTTP_ORDER_TYPE_CD, "D");
-            JSONArray businesses = new JSONArray();
-
-            AppService service = event.getAppService();
             reqJson.put("fileId", GenerateCodeFactory.getGeneratorId(GenerateCodeFactory.CODE_PREFIX_file_id));
 
             //添加单元信息
-            businesses.add(addMachineRecord(reqJson, context));
+            machineTranslateBMOImpl.addMachineRecord(reqJson, context);
             //保存文件信息
-            businesses.add(savePhoto(reqJson, context));
-
-            JSONObject paramInObj = super.restToCenterProtocol(businesses, context.getRequestCurrentHeaders());
-
-            //将 rest header 信息传递到下层服务中去
-            super.freshHttpHeader(header, context.getRequestCurrentHeaders());
-
-            responseEntity = this.callService(context, service.getServiceCode(), paramInObj);
-
+            machineTranslateBMOImpl.savePhoto(reqJson, context);
+            commit(context);
+            responseEntity = context.getResponseEntity();
             if (responseEntity.getStatusCode() != HttpStatus.OK) {
                 throw new ListenerExecuteException(ResponseConstant.RESULT_CODE_ERROR, "上报记录失败" + responseEntity);
             }
@@ -143,103 +118,6 @@ public class MachineUploadFaceLogListener extends BaseMachineListener {
             responseEntity = new ResponseEntity<>(outParam.toJSONString(), HttpStatus.OK);
             context.setResponseEntity(responseEntity);
         }
-    }
-
-    /**
-     * 保存照片
-     *
-     * @param reqJson
-     * @param context
-     */
-    private JSONObject savePhoto(JSONObject reqJson, DataFlowContext context) {
-
-
-        FileDto fileDto = new FileDto();
-        fileDto.setCommunityId(reqJson.getString("communityId"));
-        fileDto.setFileId(reqJson.getString("fileId"));
-        fileDto.setFileName(reqJson.getString("fileId"));
-        fileDto.setContext(reqJson.getString("photo"));
-        fileDto.setSuffix("jpeg");
-        int saveFlag = fileInnerServiceSMOImpl.saveFile(fileDto);
-        if (saveFlag < 1) {
-            throw new ListenerExecuteException(ResponseConstant.RESULT_CODE_ERROR, "保存文件失败");
-        }
-
-        JSONObject business = JSONObject.parseObject("{\"datas\":{}}");
-        business.put(CommonConstant.HTTP_BUSINESS_TYPE_CD, BusinessTypeConstant.BUSINESS_TYPE_SAVE_FILE_REL);
-        business.put(CommonConstant.HTTP_SEQ, DEFAULT_SEQ + 2);
-        business.put(CommonConstant.HTTP_INVOKE_MODEL, CommonConstant.HTTP_INVOKE_MODEL_S);
-        JSONObject businessUnit = new JSONObject();
-        businessUnit.put("fileRelId", "-1");
-        businessUnit.put("relTypeCd", reqJson.getString("relTypeCd"));
-        businessUnit.put("saveWay", "table");
-        businessUnit.put("objId", reqJson.getString("userId"));
-        businessUnit.put("fileRealName", reqJson.getString("fileId"));
-        businessUnit.put("fileSaveName", reqJson.getString("fileId"));
-        business.getJSONObject(CommonConstant.HTTP_BUSINESS_DATAS).put("businessFileRel", businessUnit);
-
-        return business;
-    }
-
-
-    /**
-     * 添加小区信息
-     *
-     * @param paramInJson     接口调用放传入入参
-     * @param dataFlowContext 数据上下文
-     * @return 订单服务能够接受的报文
-     */
-    private JSONObject addMachineRecord(JSONObject paramInJson, DataFlowContext dataFlowContext) {
-
-        if (!paramInJson.containsKey("openTypeCd")) {
-            paramInJson.put("openTypeCd", "1000");
-        }
-
-        if (!paramInJson.containsKey("recordTypeCd")) {
-            paramInJson.put("openTypeCd", "8888");
-        }
-        paramInJson.put("fileTime", DateUtil.getFormatTimeString(new Date(), DateUtil.DATE_FORMATE_STRING_A));
-
-        String objId = paramInJson.getString("userId");
-        //这里objId 可能是 业主ID 也可能是钥匙ID
-        //先根据业主ID去查询
-        OwnerDto ownerDto = new OwnerDto();
-        ownerDto.setCommunityId(paramInJson.getString("communityId"));
-        ownerDto.setMemberId(objId);
-        List<OwnerDto> ownerDtos = ownerInnerServiceSMOImpl.queryOwnerMembers(ownerDto);
-
-        if (ownerDtos != null && ownerDtos.size() > 0) {
-            Assert.listOnlyOne(ownerDtos, "根据业主ID查询到多条记录");
-            paramInJson.put("name", ownerDtos.get(0).getName());
-            paramInJson.put("tel", ownerDtos.get(0).getLink());
-            paramInJson.put("idCard", ownerDtos.get(0).getIdCard());
-            paramInJson.put("relTypeCd", "10000");
-        } else { //钥匙申请ID
-            ApplicationKeyDto applicationKeyDto = new ApplicationKeyDto();
-            applicationKeyDto.setCommunityId(paramInJson.getString("communityId"));
-            applicationKeyDto.setApplicationKeyId(objId);
-            List<ApplicationKeyDto> applicationKeyDtos = applicationKeyInnerServiceSMOImpl.queryApplicationKeys(applicationKeyDto);
-
-            Assert.listOnlyOne(applicationKeyDtos, "根据钥匙ID未查询到记录或查询到多条记录");
-
-            paramInJson.put("name", applicationKeyDtos.get(0).getName());
-            paramInJson.put("tel", applicationKeyDtos.get(0).getTel());
-            paramInJson.put("idCard", applicationKeyDtos.get(0).getIdCard());
-            paramInJson.put("relTypeCd", "30000");
-
-        }
-
-
-        JSONObject business = JSONObject.parseObject("{\"datas\":{}}");
-        business.put(CommonConstant.HTTP_BUSINESS_TYPE_CD, BusinessTypeConstant.BUSINESS_TYPE_SAVE_MACHINE_RECORD);
-        business.put(CommonConstant.HTTP_SEQ, DEFAULT_SEQ);
-        business.put(CommonConstant.HTTP_INVOKE_MODEL, CommonConstant.HTTP_INVOKE_MODEL_S);
-        JSONObject businessMachineRecord = new JSONObject();
-        businessMachineRecord.putAll(paramInJson);
-        businessMachineRecord.put("machineRecordId", "-1");
-        //计算 应收金额
-        business.getJSONObject(CommonConstant.HTTP_BUSINESS_DATAS).put("businessMachineRecord", businessMachineRecord);
-        return business;
     }
 
     @Override

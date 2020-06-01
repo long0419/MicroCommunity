@@ -2,7 +2,7 @@ package com.java110.code.relationship;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.java110.code.BaseGenerator;
+import com.java110.code.back.BaseGenerator;
 import com.java110.code.web.GeneratorStart;
 
 public class GeneratorFlow extends BaseGenerator {
@@ -10,7 +10,7 @@ public class GeneratorFlow extends BaseGenerator {
     public void generator(JSONObject data) {
 
         //处理组件
-        generatorComponentHtml(data);
+//        generatorComponentHtml(data);
 
 
 

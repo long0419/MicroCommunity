@@ -2,13 +2,15 @@ package com.java110.api.listener.community;
 
 import com.alibaba.fastjson.JSONObject;
 import com.java110.api.listener.AbstractServiceApiListener;
+import com.java110.core.smo.common.IAreaInnerServiceSMO;
+import com.java110.dto.area.AreaDto;
 import com.java110.utils.constant.ServiceCodeConstant;
 import com.java110.utils.util.BeanConvertUtil;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.smo.community.ICommunityInnerServiceSMO;
 import com.java110.dto.community.CommunityDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.vo.api.community.ApiCommunityDataVo;
 import com.java110.vo.api.community.ApiCommunityVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ import java.util.List;
  */
 @Java110Listener("listCommunitysListener")
 public class ListCommunitysListener extends AbstractServiceApiListener {
+
+    @Autowired
+    private IAreaInnerServiceSMO areaInnerServiceSMOImpl;
 
     @Autowired
     private ICommunityInnerServiceSMO communityInnerServiceSMOImpl;
@@ -70,9 +75,12 @@ public class ListCommunitysListener extends AbstractServiceApiListener {
 
         if (count > 0) {
             communitys = BeanConvertUtil.covertBeanList(communityInnerServiceSMOImpl.queryCommunitys(communityDto), ApiCommunityDataVo.class);
+
+            refreshCommunityCity(communitys);
         } else {
             communitys = new ArrayList<>();
         }
+
 
         ApiCommunityVo apiCommunityVo = new ApiCommunityVo();
 
@@ -84,5 +92,39 @@ public class ListCommunitysListener extends AbstractServiceApiListener {
 
         context.setResponseEntity(responseEntity);
 
+    }
+
+    /**
+     * 刷新cityName
+     *
+     * @param communitys
+     */
+    private void refreshCommunityCity(List<ApiCommunityDataVo> communitys) {
+        List<String> areaCodes = new ArrayList<>();
+        for (ApiCommunityDataVo communityDataVo : communitys) {
+            areaCodes.add(communityDataVo.getCityCode());
+        }
+        if(areaCodes.size() > 0){
+            AreaDto areaDto = new AreaDto();
+            areaDto.setAreaCodes(areaCodes.toArray(new String[areaCodes.size()]));
+            List<AreaDto> areaDtos = areaInnerServiceSMOImpl.getProvCityArea(areaDto);
+            for (ApiCommunityDataVo communityDataVo : communitys) {
+                for (AreaDto tmpAreaDto : areaDtos) {
+                    if (communityDataVo.getCityCode().equals(tmpAreaDto.getAreaCode())) {
+                        communityDataVo.setCityName(tmpAreaDto.getProvName() + tmpAreaDto.getCityName() + tmpAreaDto.getAreaName());
+                        continue;
+                    }
+                    communityDataVo.setCityName("未知");
+                }
+            }
+        }
+    }
+
+    public IAreaInnerServiceSMO getAreaInnerServiceSMOImpl() {
+        return areaInnerServiceSMOImpl;
+    }
+
+    public void setAreaInnerServiceSMOImpl(IAreaInnerServiceSMO areaInnerServiceSMOImpl) {
+        this.areaInnerServiceSMOImpl = areaInnerServiceSMOImpl;
     }
 }

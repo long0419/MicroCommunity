@@ -5,12 +5,14 @@ import com.java110.api.listener.AbstractServiceApiListener;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.smo.community.ICommunityInnerServiceSMO;
+import com.java110.core.smo.org.IOrgCommunityInnerServiceSMO;
 import com.java110.core.smo.org.IOrgInnerServiceSMO;
 import com.java110.core.smo.org.IOrgStaffRelInnerServiceSMO;
 import com.java110.dto.community.CommunityDto;
+import com.java110.dto.org.OrgCommunityDto;
 import com.java110.dto.org.OrgDto;
 import com.java110.dto.org.OrgStaffRelDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeConstant;
 import com.java110.utils.constant.StateConstant;
 import com.java110.utils.util.Assert;
@@ -37,6 +39,9 @@ public class ListMyEnteredCommunitysListener extends AbstractServiceApiListener 
 
     @Autowired
     private IOrgStaffRelInnerServiceSMO orgStaffRelInnerServiceSMOImpl;
+
+    @Autowired
+    private IOrgCommunityInnerServiceSMO orgCommunityInnerServiceSMOImpl;
 
     @Autowired
     private IOrgInnerServiceSMO orgInnerServiceSMOImpl;
@@ -76,6 +81,8 @@ public class ListMyEnteredCommunitysListener extends AbstractServiceApiListener 
     @Override
     protected void doSoService(ServiceDataFlowEvent event, DataFlowContext context, JSONObject reqJson) {
 
+
+
         //1.0 先查询 员工对应的部门
         OrgStaffRelDto orgStaffRelDto = new OrgStaffRelDto();
         orgStaffRelDto.setStoreId(reqJson.getString("storeId"));
@@ -86,18 +93,22 @@ public class ListMyEnteredCommunitysListener extends AbstractServiceApiListener 
 
         //2.0 再根据 部门对应的 小区ID查询小区信息
         OrgDto orgDto = new OrgDto();
-        orgDto.setOrgId(orgStaffRelDtos.get(0).getOrgId());
+        orgDto.setOrgId(orgStaffRelDtos.get(0).getParentOrgId());
         orgDto.setStoreId(reqJson.getString("storeId"));
-        orgDto.setOrgLevel("3");
+        orgDto.setOrgLevel("2");
         List<OrgDto> orgDtos = orgInnerServiceSMOImpl.queryOrgs(orgDto);
 
         Assert.listOnlyOne(orgDtos, "根据组织ID未查询到员工对应部门信息或查询到多条数据");
+
         int count = 0;
         List<ApiCommunityDataVo> communitys = null;
         if ("9999".equals(orgDtos.get(0).getBelongCommunityId())) {
             CommunityDto communityDto = BeanConvertUtil.covertBean(reqJson, CommunityDto.class);
             communityDto.setMemberId(reqJson.getString("storeId"));
             communityDto.setAuditStatusCd(StateConstant.AGREE_AUDIT);
+            if(reqJson.containsKey("communityName")){
+                communityDto.setName(reqJson.getString("communityName"));
+            }
             count = communityInnerServiceSMOImpl.queryCommunitysCount(communityDto);
             if (count > 0) {
                 communitys = BeanConvertUtil.covertBeanList(communityInnerServiceSMOImpl.queryCommunitys(communityDto), ApiCommunityDataVo.class);
@@ -105,10 +116,23 @@ public class ListMyEnteredCommunitysListener extends AbstractServiceApiListener 
                 communitys = new ArrayList<>();
             }
         } else {
-            CommunityDto communityDto = new CommunityDto();
-            communityDto.setCommunityId(orgDtos.get(0).getBelongCommunityId());
-            communitys = BeanConvertUtil.covertBeanList(communityInnerServiceSMOImpl.queryCommunitys(communityDto), ApiCommunityDataVo.class);
-            count = 1;
+            String companyOrgId = orgDtos.get(0).getOrgId();
+            OrgCommunityDto orgCommunityDto = BeanConvertUtil.covertBean(reqJson, OrgCommunityDto.class);
+            orgCommunityDto.setOrgId(companyOrgId);
+            count = orgCommunityInnerServiceSMOImpl.queryOrgCommunitysCount(orgCommunityDto);
+            if (count > 0) {
+                List<OrgCommunityDto> orgCommunityDtos = orgCommunityInnerServiceSMOImpl.queryOrgCommunitys(orgCommunityDto);
+                communitys = BeanConvertUtil.covertBeanList(orgCommunityDtos, ApiCommunityDataVo.class);
+                for (OrgCommunityDto tmpOrgCommunityDto : orgCommunityDtos) {
+                    for (ApiCommunityDataVo tmpApiCommunityDataVo : communitys) {
+                        if (tmpOrgCommunityDto.getCommunityId().equals(tmpApiCommunityDataVo.getCommunityId())) {
+                            tmpApiCommunityDataVo.setName(tmpOrgCommunityDto.getCommunityName());
+                        }
+                    }
+                }
+            } else {
+                communitys = new ArrayList<>();
+            }
         }
 
 

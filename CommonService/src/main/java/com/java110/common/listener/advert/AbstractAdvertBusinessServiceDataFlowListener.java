@@ -3,7 +3,7 @@ package com.java110.common.listener.advert;
 import com.alibaba.fastjson.JSONObject;
 import com.java110.common.dao.IAdvertServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
@@ -89,6 +89,11 @@ public abstract class AbstractAdvertBusinessServiceDataFlowListener extends Abst
 
         currentAdvertInfo.put("operate", StatusConstant.OPERATE_DEL);
         getAdvertServiceDaoImpl().saveBusinessAdvertInfo(currentAdvertInfo);
+        for(Object key : currentAdvertInfo.keySet()) {
+            if(businessAdvert.get(key) == null) {
+                businessAdvert.put(key.toString(), currentAdvertInfo.get(key));
+            }
+        }
     }
 
 

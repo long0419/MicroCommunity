@@ -90,8 +90,14 @@ public class AuthenticationFactory {
             throw new NoAuthorityException(ResponseConstant.RESULT_CODE_NO_AUTHORITY_ERROR, "MD5签名过程中出现错误");
         }
         String reqInfo = dataFlow.getTransactionId() + dataFlow.getRequestTime() + dataFlow.getAppId();
-        reqInfo += "GET,DELETE".equals(dataFlow.getRequestHeaders().get(CommonConstant.HTTP_METHOD)) ?
-                dataFlow.getRequestHeaders().get("REQUEST_URL") : dataFlow.getReqData();
+        String url = dataFlow.getRequestHeaders().get("REQUEST_URL");
+        String param = "";
+        if(url.indexOf("?") > 0){
+            param = url.substring(url.indexOf("?"));
+        }
+        //,DELETE
+        reqInfo += "GET".equals(dataFlow.getRequestHeaders().get(CommonConstant.HTTP_METHOD)) ?
+                param : dataFlow.getReqData();
         reqInfo += dataFlow.getAppRoutes().get(0).getSecurityCode();
         return md5(reqInfo);
     }
@@ -399,15 +405,17 @@ public class AuthenticationFactory {
 
     /***********************************JWT end***************************************/
     public static void main(String[] args) throws Exception {
-        KeyPair keyPair = genKeyPair(1024);
+//        KeyPair keyPair = genKeyPair(1024);
+//
+//        //获取公钥，并以base64格式打印出来
+//        PublicKey publicKey = keyPair.getPublic();
+//        System.out.println("公钥：" + new String(Base64.getEncoder().encode(publicKey.getEncoded())));
+//
+//        //获取私钥，并以base64格式打印出来
+//        PrivateKey privateKey = keyPair.getPrivate();
+//        System.out.println("私钥：" + new String(Base64.getEncoder().encode(privateKey.getEncoded())));
 
-        //获取公钥，并以base64格式打印出来
-        PublicKey publicKey = keyPair.getPublic();
-        System.out.println("公钥：" + new String(Base64.getEncoder().encode(publicKey.getEncoded())));
-
-        //获取私钥，并以base64格式打印出来
-        PrivateKey privateKey = keyPair.getPrivate();
-        System.out.println("私钥：" + new String(Base64.getEncoder().encode(privateKey.getEncoded())));
+        System.out.printf("passwdMd5 " + passwdMd5("wuxw2015"));
 
     }
 }

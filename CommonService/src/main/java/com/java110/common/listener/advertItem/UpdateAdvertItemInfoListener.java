@@ -6,6 +6,7 @@ import com.java110.common.dao.IAdvertItemServiceDao;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.entity.center.Business;
+import com.java110.po.advert.AdvertItemPo;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -62,28 +63,27 @@ public class UpdateAdvertItemInfoListener extends AbstractAdvertItemBusinessServ
 
         Assert.notEmpty(data, "没有datas 节点，或没有子节点需要处理");
 
+
         //处理 businessAdvertItem 节点
-        if (data.containsKey("businessAdvertItem")) {
-            //处理 businessAdvertItem 节点
-            if (data.containsKey("businessAdvertItem")) {
-                Object _obj = data.get("businessAdvertItem");
-                JSONArray businessAdvertItems = null;
+        if (data.containsKey(AdvertItemPo.class.getSimpleName())) {
+            Object _obj = data.get(AdvertItemPo.class.getSimpleName());
+            JSONArray businessAdvertItems = null;
+            if (_obj instanceof JSONObject) {
+                businessAdvertItems = new JSONArray();
+                businessAdvertItems.add(_obj);
+            } else {
+                businessAdvertItems = (JSONArray) _obj;
+            }
+            //JSONObject businessAdvertItem = data.getJSONObject("businessAdvertItem");
+            for (int _advertItemIndex = 0; _advertItemIndex < businessAdvertItems.size(); _advertItemIndex++) {
+                JSONObject businessAdvertItem = businessAdvertItems.getJSONObject(_advertItemIndex);
+                doBusinessAdvertItem(business, businessAdvertItem);
                 if (_obj instanceof JSONObject) {
-                    businessAdvertItems = new JSONArray();
-                    businessAdvertItems.add(_obj);
-                } else {
-                    businessAdvertItems = (JSONArray) _obj;
-                }
-                //JSONObject businessAdvertItem = data.getJSONObject("businessAdvertItem");
-                for (int _advertItemIndex = 0; _advertItemIndex < businessAdvertItems.size(); _advertItemIndex++) {
-                    JSONObject businessAdvertItem = businessAdvertItems.getJSONObject(_advertItemIndex);
-                    doBusinessAdvertItem(business, businessAdvertItem);
-                    if (_obj instanceof JSONObject) {
-                        dataFlowContext.addParamOut("advertItemId", businessAdvertItem.getString("advertItemId"));
-                    }
+                    dataFlowContext.addParamOut("advertItemId", businessAdvertItem.getString("advertItemId"));
                 }
             }
         }
+
     }
 
 

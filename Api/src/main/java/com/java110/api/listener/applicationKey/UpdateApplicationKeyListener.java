@@ -1,42 +1,31 @@
 package com.java110.api.listener.applicationKey;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.java110.api.listener.AbstractServiceApiListener;
+import com.java110.api.bmo.applicationKey.IApplicationKeyBMO;
+import com.java110.api.listener.AbstractServiceApiPlusListener;
 import com.java110.core.factory.GenerateCodeFactory;
 import com.java110.core.smo.file.IFileInnerServiceSMO;
 import com.java110.core.smo.file.IFileRelInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IApplicationKeyInnerServiceSMO;
-import com.java110.core.smo.hardwareAdapation.IMachineInnerServiceSMO;
 import com.java110.dto.file.FileDto;
-import com.java110.dto.file.FileRelDto;
-import com.java110.dto.hardwareAdapation.ApplicationKeyDto;
-import com.java110.dto.hardwareAdapation.MachineDto;
 import com.java110.utils.constant.*;
-import com.java110.utils.exception.ListenerExecuteException;
 import com.java110.utils.util.Assert;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
-import com.java110.entity.center.AppService;
-import com.java110.event.service.api.ServiceDataFlowEvent;
-import com.java110.utils.util.BeanConvertUtil;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-
-import java.util.List;
 
 /**
  * 保存钥匙申请侦听
  * add by wuxw 2019-06-30
  */
 @Java110Listener("updateApplicationKeyListener")
-public class UpdateApplicationKeyListener extends AbstractServiceApiListener {
+public class UpdateApplicationKeyListener extends AbstractServiceApiPlusListener {
 
     @Autowired
-    private IMachineInnerServiceSMO machineInnerServiceSMOImpl;
+    private IApplicationKeyBMO applicationKeyBMOImpl;
 
     @Autowired
     private IApplicationKeyInnerServiceSMO applicationKeyInnerServiceSMOImpl;
@@ -62,20 +51,14 @@ public class UpdateApplicationKeyListener extends AbstractServiceApiListener {
         Assert.hasKeyAndValue(reqJson, "endTime", "必填，请选择结束时间");
         Assert.hasKeyAndValue(reqJson, "locationTypeCd", "必填，位置不能为空");
         Assert.hasKeyAndValue(reqJson, "locationObjId", "必填，未选择位置对象");
+        Assert.hasKeyAndValue(reqJson, "typeFlag", "必填，未选择钥匙类型");
 
     }
 
     @Override
     protected void doSoService(ServiceDataFlowEvent event, DataFlowContext context, JSONObject reqJson) {
-
-        HttpHeaders header = new HttpHeaders();
-        context.getRequestCurrentHeaders().put(CommonConstant.HTTP_ORDER_TYPE_CD, "D");
-        JSONArray businesses = new JSONArray();
-
-        AppService service = event.getAppService();
-
-        //添加单元信息
-        businesses.add(updateApplicationKey(reqJson, context));
+        //添加钥匙信息
+        applicationKeyBMOImpl.updateApplicationKey(reqJson, context);
 
         if (reqJson.containsKey("photo") && !StringUtils.isEmpty(reqJson.getString("photo"))) {
             FileDto fileDto = new FileDto();
@@ -84,23 +67,13 @@ public class UpdateApplicationKeyListener extends AbstractServiceApiListener {
             fileDto.setContext(reqJson.getString("photo"));
             fileDto.setSuffix("jpeg");
             fileDto.setCommunityId(reqJson.getString("communityId"));
-            if (fileInnerServiceSMOImpl.saveFile(fileDto) < 1) {
-                throw new ListenerExecuteException(ResponseConstant.RESULT_PARAM_ERROR, "保存文件出错");
-            }
+            String fileName = fileInnerServiceSMOImpl.saveFile(fileDto);
             reqJson.put("applicationKeyPhotoId", fileDto.getFileId());
+            reqJson.put("fileSaveName", fileName);
 
-            businesses.add(editApplicationKeyPhoto(reqJson, context));
+            applicationKeyBMOImpl.editApplicationKeyPhoto(reqJson, context);
 
         }
-
-        JSONObject paramInObj = super.restToCenterProtocol(businesses, context.getRequestCurrentHeaders());
-
-        //将 rest header 信息传递到下层服务中去
-        super.freshHttpHeader(header, context.getRequestCurrentHeaders());
-
-        ResponseEntity<String> responseEntity = this.callService(context, service.getServiceCode(), paramInObj);
-
-        context.setResponseEntity(responseEntity);
     }
 
     @Override
@@ -118,89 +91,6 @@ public class UpdateApplicationKeyListener extends AbstractServiceApiListener {
         return DEFAULT_ORDER;
     }
 
-
-    /**
-     * 添加钥匙申请信息
-     *
-     * @param paramInJson     接口调用放传入入参
-     * @param dataFlowContext 数据上下文
-     * @return 订单服务能够接受的报文
-     */
-    private JSONObject updateApplicationKey(JSONObject paramInJson, DataFlowContext dataFlowContext) {
-        //根据位置id 和 位置对象查询相应 设备ID
-        MachineDto machineDto = new MachineDto();
-        machineDto.setLocationObjId(paramInJson.getString("locationObjId"));
-        machineDto.setLocationTypeCd(paramInJson.getString("locationTypeCd"));
-        List<MachineDto> machineDtos = machineInnerServiceSMOImpl.queryMachines(machineDto);
-        Assert.listOnlyOne(machineDtos, "该位置还没有相应的门禁设备");
-        ApplicationKeyDto applicationKeyDto = new ApplicationKeyDto();
-        applicationKeyDto.setApplicationKeyId(paramInJson.getString("applicationKeyId"));
-        applicationKeyDto.setCommunityId(paramInJson.getString("communityId"));
-        List<ApplicationKeyDto> applicationKeyDtos = applicationKeyInnerServiceSMOImpl.queryApplicationKeys(applicationKeyDto);
-        Assert.listOnlyOne(applicationKeyDtos, "未找到申请记录或找到多条记录");
-
-        JSONObject business = JSONObject.parseObject("{\"datas\":{}}");
-        business.put(CommonConstant.HTTP_BUSINESS_TYPE_CD, BusinessTypeConstant.BUSINESS_TYPE_UPDATE_APPLICATION_KEY);
-        business.put(CommonConstant.HTTP_SEQ, DEFAULT_SEQ);
-        business.put(CommonConstant.HTTP_INVOKE_MODEL, CommonConstant.HTTP_INVOKE_MODEL_S);
-        JSONObject businessApplicationKey = new JSONObject();
-        businessApplicationKey.putAll(paramInJson);
-        businessApplicationKey.put("machineId", machineDtos.get(0).getMachineId());
-        businessApplicationKey.put("state", applicationKeyDtos.get(0).getState());
-        //计算 应收金额
-        business.getJSONObject(CommonConstant.HTTP_BUSINESS_DATAS).put("businessApplicationKey", businessApplicationKey);
-        return business;
-    }
-
-
-    /**
-     * 添加物业费用
-     *
-     * @param paramInJson     接口调用放传入入参
-     * @param dataFlowContext 数据上下文
-     * @return 订单服务能够接受的报文
-     */
-    private JSONObject editApplicationKeyPhoto(JSONObject paramInJson, DataFlowContext dataFlowContext) {
-
-        FileRelDto fileRelDto = new FileRelDto();
-        fileRelDto.setRelTypeCd("30000");
-        fileRelDto.setObjId(paramInJson.getString("applicationKeyId"));
-        List<FileRelDto> fileRelDtos = fileRelInnerServiceSMOImpl.queryFileRels(fileRelDto);
-        if(fileRelDtos == null || fileRelDtos.size() == 0){
-            JSONObject business = JSONObject.parseObject("{\"datas\":{}}");
-            business.put(CommonConstant.HTTP_BUSINESS_TYPE_CD, BusinessTypeConstant.BUSINESS_TYPE_SAVE_FILE_REL);
-            business.put(CommonConstant.HTTP_SEQ, DEFAULT_SEQ + 2);
-            business.put(CommonConstant.HTTP_INVOKE_MODEL, CommonConstant.HTTP_INVOKE_MODEL_S);
-            JSONObject businessUnit = new JSONObject();
-            businessUnit.put("fileRelId", "-1");
-            businessUnit.put("relTypeCd", "30000");
-            businessUnit.put("saveWay", "table");
-            businessUnit.put("objId", paramInJson.getString("applicationKeyId"));
-            businessUnit.put("fileRealName", paramInJson.getString("applicationKeyPhotoId"));
-            businessUnit.put("fileSaveName", paramInJson.getString("applicationKeyPhotoId"));
-            business.getJSONObject(CommonConstant.HTTP_BUSINESS_DATAS).put("businessFileRel", businessUnit);
-            return business;
-        }
-        JSONObject business = JSONObject.parseObject("{\"datas\":{}}");
-        business.put(CommonConstant.HTTP_BUSINESS_TYPE_CD, BusinessTypeConstant.BUSINESS_TYPE_UPDATE_FILE_REL);
-        business.put(CommonConstant.HTTP_SEQ, DEFAULT_SEQ + 2);
-        business.put(CommonConstant.HTTP_INVOKE_MODEL, CommonConstant.HTTP_INVOKE_MODEL_S);
-        JSONObject businessUnit = new JSONObject();
-        businessUnit.putAll(BeanConvertUtil.beanCovertMap(fileRelDtos.get(0)));
-        businessUnit.put("fileRealName", paramInJson.getString("applicationKeyPhotoId"));
-        businessUnit.put("fileSaveName", paramInJson.getString("applicationKeyPhotoId"));
-        business.getJSONObject(CommonConstant.HTTP_BUSINESS_DATAS).put("businessFileRel", businessUnit);
-        return business;
-
-
-    }
-    public IMachineInnerServiceSMO getMachineInnerServiceSMOImpl() {
-        return machineInnerServiceSMOImpl;
-    }
-
-    public void setMachineInnerServiceSMOImpl(IMachineInnerServiceSMO machineInnerServiceSMOImpl) {
-        this.machineInnerServiceSMOImpl = machineInnerServiceSMOImpl;
-    }
 
     public IApplicationKeyInnerServiceSMO getApplicationKeyInnerServiceSMOImpl() {
         return applicationKeyInnerServiceSMOImpl;

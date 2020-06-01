@@ -2,6 +2,7 @@ package com.java110.community.listener.floor;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.java110.po.floor.FloorPo;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -61,25 +62,23 @@ public class DeleteFloorInfoListener extends AbstractFloorBusinessServiceDataFlo
 
         Assert.notEmpty(data, "没有datas 节点，或没有子节点需要处理");
 
+
         //处理 businessFloor 节点
-        if (data.containsKey("businessFloor")) {
-            //处理 businessFloor 节点
-            if (data.containsKey("businessFloor")) {
-                Object _obj = data.get("businessFloor");
-                JSONArray businessFloors = null;
+        if (data.containsKey(FloorPo.class.getSimpleName())) {
+            Object _obj = data.get(FloorPo.class.getSimpleName());
+            JSONArray businessFloors = null;
+            if (_obj instanceof JSONObject) {
+                businessFloors = new JSONArray();
+                businessFloors.add(_obj);
+            } else {
+                businessFloors = (JSONArray) _obj;
+            }
+            //JSONObject businessFloor = data.getJSONObject("businessFloor");
+            for (int _floorIndex = 0; _floorIndex < businessFloors.size(); _floorIndex++) {
+                JSONObject businessFloor = businessFloors.getJSONObject(_floorIndex);
+                doBusinessFloor(business, businessFloor);
                 if (_obj instanceof JSONObject) {
-                    businessFloors = new JSONArray();
-                    businessFloors.add(_obj);
-                } else {
-                    businessFloors = (JSONArray) _obj;
-                }
-                //JSONObject businessFloor = data.getJSONObject("businessFloor");
-                for (int _floorIndex = 0; _floorIndex < businessFloors.size(); _floorIndex++) {
-                    JSONObject businessFloor = businessFloors.getJSONObject(_floorIndex);
-                    doBusinessFloor(business, businessFloor);
-                    if (_obj instanceof JSONObject) {
-                        dataFlowContext.addParamOut("floorId", businessFloor.getString("floorId"));
-                    }
+                    dataFlowContext.addParamOut("floorId", businessFloor.getString("floorId"));
                 }
             }
         }

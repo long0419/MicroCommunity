@@ -315,8 +315,12 @@
         <if test="memberId != null and memberId != '' and needCommunityInfo == true">
             AND ms.`community_id` = msc.`community_id`
             and msc.member_id = #{memberId}
+            and msc.status_cd = '0'
         </if>
         <if test="memberId != null and memberId != '' and needCommunityInfo == false">
+            and ms.member_id = #{memberId}
+        </if>
+        <if test="subMemberId != null and subMemberId != ''">
             and ms.member_id = #{memberId}
         </if>
         <if test="noAuditEnterCommunity == true">
@@ -332,6 +336,13 @@
         <if test="communityId != null and communityId != ''">
             and ms.community_id = #{communityId}
         </if>
+        <if test="communityName != null and communityName != '' and needCommunityInfo == true">
+            and sc.name like concat('%',#{communityName},'%')
+        </if>
+        <if test="needCommunityInfo == true">
+            group by ms.community_id
+        </if>
+        order by ms.create_time desc
         <if test="page != -1 and page != null">
             limit #{page},#{row}
         </if>
@@ -358,7 +369,7 @@
 
     <!-- 查询小区成员  add by wuxw 2018-07-03 -->
     <select id="getCommunityMemberCount" parameterType="Map" resultType="Map">
-        select count(1) count
+        select ms.community_id,count(1) count
         from s_community_member ms
         <if test="needCommunityInfo == true">
             ,s_community sc,
@@ -383,8 +394,13 @@
         <if test="memberId != null and memberId != '' and needCommunityInfo == true">
             AND ms.`community_id` = msc.`community_id`
             and msc.member_id = #{memberId}
+            and msc.status_cd = '0'
         </if>
         <if test="memberId != null and memberId != '' and needCommunityInfo == false">
+            and ms.member_id = #{memberId}
+        </if>
+
+        <if test="subMemberId != null and subMemberId != ''">
             and ms.member_id = #{memberId}
         </if>
 
@@ -408,6 +424,13 @@
         <if test="communityId != null and communityId != ''">
             and ms.community_id = #{communityId}
         </if>
+        <if test="communityName != null and communityName != '' and needCommunityInfo == true">
+            and sc.name like concat('%',#{communityName},'%')
+        </if>
+        <if test="needCommunityInfo == true">
+            group by ms.community_id
+        </if>
+
     </select>
 
     <!-- 查询小区信息 add by wuxw 2018-07-03 -->
@@ -422,12 +445,15 @@
         THEN '审核完成'
         ELSE
         '审核拒绝'
-        END) stateName
-        from s_community t
+        END) stateName,ca.area_code areaCode,ca.area_name areaName,
+        ca.parent_area_code parentAreaCode,ca.parent_area_name parentAreaName
+        from s_community t,city_area ca
         <if test="memberId !=null and memberId !=''">
             ,s_community_member cm
         </if>
         where 1 =1
+        and t.city_code = ca.area_code
+        and ca.status_cd = '0'
         <if test="address !=null and address != ''">
             and t.address= #{address}
         </if>
@@ -438,7 +464,7 @@
             and t.city_code= #{cityCode}
         </if>
         <if test="name !=null and name != ''">
-            and t.name= #{name}
+            and t.name like concat('%',#{name},'%')
         </if>
         <if test="statusCd !=null and statusCd != ''">
             and t.status_cd= #{statusCd}
@@ -472,6 +498,13 @@
         <if test="memberId !=null and memberId !='' and auditStatusCd != null and auditStatusCd !=''">
             and cm.audit_status_cd = #{auditStatusCd}
         </if>
+        <if test="notInCommunityId != null ">
+            and t.community_id not in
+            <foreach collection="notInCommunityId" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        group by t.community_id
         <if test="page != -1 and page != null ">
             limit #{page}, #{row}
         </if>
@@ -498,13 +531,19 @@
             and t.city_code= #{cityCode}
         </if>
         <if test="name !=null and name != ''">
-            and t.name= #{name}
+            and t.name like concat('%',#{name},'%')
         </if>
         <if test="statusCd !=null and statusCd != ''">
             and t.status_cd= #{statusCd}
         </if>
         <if test="communityId !=null and communityId != ''">
             and t.community_id= #{communityId}
+        </if>
+        <if test="communityIds !=null">
+            and t.community_id in
+            <foreach collection="communityIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
         <if test="bId !=null and bId != ''">
             and t.b_id= #{bId}
@@ -520,8 +559,17 @@
         </if>
         <if test="memberId !=null and memberId !=''">
             and cm.community_id = t.community_id
-                and cm.member_id = #{memberId}
-                and cm.status_cd = '0'
+            and cm.member_id = #{memberId}
+            and cm.status_cd = '0'
+        </if>
+        <if test="memberId !=null and memberId !='' and auditStatusCd != null and auditStatusCd !=''">
+            and cm.audit_status_cd = #{auditStatusCd}
+        </if>
+        <if test="notInCommunityId != null ">
+            and t.community_id not in
+            <foreach collection="notInCommunityId" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
 
 

@@ -8,7 +8,7 @@ import com.java110.core.context.DataFlowContext;
 import com.java110.core.factory.GenerateCodeFactory;
 import com.java110.core.smo.menu.IMenuInnerServiceSMO;
 import com.java110.dto.menuGroup.MenuGroupDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -34,7 +34,6 @@ public class SaveMenuGroupListener extends AbstractServiceApiListener {
 
         Assert.hasKeyAndValue(reqJson, "name", "必填，请填写组名称");
         Assert.hasKeyAndValue(reqJson, "icon", "必填，请填写icon");
-        Assert.hasKeyAndValue(reqJson, "label", "必填，请填写标签");
         Assert.hasKeyAndValue(reqJson, "seq", "必填，请填写序列");
 
     }

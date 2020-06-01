@@ -16,6 +16,8 @@ public class DateUtil {
 
     private static DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
 
+    public static final String LAST_TIME = "2038-01-01 00:00:00";
+
     private static Map<String, SimpleDateFormat> formats = new HashMap();
     public static final String DATE_FORMATE_STRING_DEFAULT = "yyyyMMddHHmmss";
     public static final String DATE_FORMATE_STRING_A = "yyyy-MM-dd HH:mm:ss";
@@ -77,7 +79,7 @@ public class DateUtil {
     }
 
     public static Date getLastDate() throws ParseException {
-        return getDateFromString("3000-01-01", DATE_FORMATE_STRING_B);
+        return getDateFromString("2037-12-01", DATE_FORMATE_STRING_B);
     }
 
     /**
@@ -144,6 +146,10 @@ public class DateUtil {
 
     public static String getNow(String pattern) {
         return getFormatTimeString(new Date(), pattern);
+    }
+
+    public static String getLastTime(){
+        return LAST_TIME;
     }
 
     public static String getNowII() {
@@ -380,5 +386,30 @@ public class DateUtil {
             return false;
         }
         return true;
+    }
+
+
+    public static int getCurrentMonthDay() {
+        Calendar a = Calendar.getInstance();
+        a.set(Calendar.DATE, 1);
+        a.roll(Calendar.DATE, -1);
+        int maxDate = a.get(Calendar.DATE);
+        return maxDate;
+    }
+
+
+    /**
+     * 在给定的日期加上或减去指定月份后的日期
+     *
+     * @param sourceDate 原始时间
+     * @param month      要调整的月份，向前为负数，向后为正数
+     * @return
+     */
+    public static Date stepMonth(Date sourceDate, int month) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(sourceDate);
+        c.add(Calendar.MONTH, month);
+
+        return c.getTime();
     }
 }

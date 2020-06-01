@@ -2,6 +2,7 @@ package com.java110.fee.listener.config;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.java110.po.fee.PayFeeConfigPo;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 /**
  * 修改费用配置信息 侦听
- *
+ * <p>
  * 处理节点
  * 1、businessFeeConfig:{} 费用配置基本信息节点
  * 2、businessFeeConfigAttr:[{}] 费用配置属性信息节点
@@ -51,45 +52,45 @@ public class UpdateFeeConfigInfoListener extends AbstractFeeConfigBusinessServic
 
     /**
      * business过程
+     *
      * @param dataFlowContext 上下文对象
-     * @param business 业务对象
+     * @param business        业务对象
      */
     @Override
     protected void doSaveBusiness(DataFlowContext dataFlowContext, Business business) {
 
         JSONObject data = business.getDatas();
 
-        Assert.notEmpty(data,"没有datas 节点，或没有子节点需要处理");
+        Assert.notEmpty(data, "没有datas 节点，或没有子节点需要处理");
 
         //处理 businessFeeConfig 节点
-        if(data.containsKey("businessFeeConfig")){
-            //处理 businessFeeConfig 节点
-            if(data.containsKey("businessFeeConfig")){
-                Object _obj = data.get("businessFeeConfig");
-                JSONArray businessFeeConfigs = null;
-                if(_obj instanceof JSONObject){
-                    businessFeeConfigs = new JSONArray();
-                    businessFeeConfigs.add(_obj);
-                }else {
-                    businessFeeConfigs = (JSONArray)_obj;
-                }
-                //JSONObject businessFeeConfig = data.getJSONObject("businessFeeConfig");
-                for (int _feeConfigIndex = 0; _feeConfigIndex < businessFeeConfigs.size();_feeConfigIndex++) {
-                    JSONObject businessFeeConfig = businessFeeConfigs.getJSONObject(_feeConfigIndex);
-                    doBusinessFeeConfig(business, businessFeeConfig);
-                    if(_obj instanceof JSONObject) {
-                        dataFlowContext.addParamOut("configId", businessFeeConfig.getString("configId"));
-                    }
+        if (data.containsKey(PayFeeConfigPo.class.getSimpleName())) {
+            Object _obj = data.get(PayFeeConfigPo.class.getSimpleName());
+            JSONArray businessFeeConfigs = null;
+            if (_obj instanceof JSONObject) {
+                businessFeeConfigs = new JSONArray();
+                businessFeeConfigs.add(_obj);
+            } else {
+                businessFeeConfigs = (JSONArray) _obj;
+            }
+            //JSONObject businessFeeConfig = data.getJSONObject("businessFeeConfig");
+            for (int _feeConfigIndex = 0; _feeConfigIndex < businessFeeConfigs.size(); _feeConfigIndex++) {
+                JSONObject businessFeeConfig = businessFeeConfigs.getJSONObject(_feeConfigIndex);
+                doBusinessFeeConfig(business, businessFeeConfig);
+                if (_obj instanceof JSONObject) {
+                    dataFlowContext.addParamOut("configId", businessFeeConfig.getString("configId"));
                 }
             }
         }
+
     }
 
 
     /**
      * business to instance 过程
+     *
      * @param dataFlowContext 数据对象
-     * @param business 当前业务对象
+     * @param business        当前业务对象
      */
     @Override
     protected void doBusinessToInstance(DataFlowContext dataFlowContext, Business business) {
@@ -97,17 +98,17 @@ public class UpdateFeeConfigInfoListener extends AbstractFeeConfigBusinessServic
         JSONObject data = business.getDatas();
 
         Map info = new HashMap();
-        info.put("bId",business.getbId());
-        info.put("operate",StatusConstant.OPERATE_ADD);
+        info.put("bId", business.getbId());
+        info.put("operate", StatusConstant.OPERATE_ADD);
 
         //费用配置信息
         List<Map> businessFeeConfigInfos = feeConfigServiceDaoImpl.getBusinessFeeConfigInfo(info);
-        if( businessFeeConfigInfos != null && businessFeeConfigInfos.size() >0) {
-            for (int _feeConfigIndex = 0; _feeConfigIndex < businessFeeConfigInfos.size();_feeConfigIndex++) {
+        if (businessFeeConfigInfos != null && businessFeeConfigInfos.size() > 0) {
+            for (int _feeConfigIndex = 0; _feeConfigIndex < businessFeeConfigInfos.size(); _feeConfigIndex++) {
                 Map businessFeeConfigInfo = businessFeeConfigInfos.get(_feeConfigIndex);
-                flushBusinessFeeConfigInfo(businessFeeConfigInfo,StatusConstant.STATUS_CD_VALID);
+                flushBusinessFeeConfigInfo(businessFeeConfigInfo, StatusConstant.STATUS_CD_VALID);
                 feeConfigServiceDaoImpl.updateFeeConfigInfoInstance(businessFeeConfigInfo);
-                if(businessFeeConfigInfo.size() == 1) {
+                if (businessFeeConfigInfo.size() == 1) {
                     dataFlowContext.addParamOut("configId", businessFeeConfigInfo.get("config_id"));
                 }
             }
@@ -117,8 +118,9 @@ public class UpdateFeeConfigInfoListener extends AbstractFeeConfigBusinessServic
 
     /**
      * 撤单
+     *
      * @param dataFlowContext 数据对象
-     * @param business 当前业务对象
+     * @param business        当前业务对象
      */
     @Override
     protected void doRecover(DataFlowContext dataFlowContext, Business business) {
@@ -126,24 +128,24 @@ public class UpdateFeeConfigInfoListener extends AbstractFeeConfigBusinessServic
         String bId = business.getbId();
         //Assert.hasLength(bId,"请求报文中没有包含 bId");
         Map info = new HashMap();
-        info.put("bId",bId);
-        info.put("statusCd",StatusConstant.STATUS_CD_VALID);
+        info.put("bId", bId);
+        info.put("statusCd", StatusConstant.STATUS_CD_VALID);
         Map delInfo = new HashMap();
-        delInfo.put("bId",business.getbId());
-        delInfo.put("operate",StatusConstant.OPERATE_DEL);
+        delInfo.put("bId", business.getbId());
+        delInfo.put("operate", StatusConstant.OPERATE_DEL);
         //费用配置信息
         List<Map> feeConfigInfo = feeConfigServiceDaoImpl.getFeeConfigInfo(info);
-        if(feeConfigInfo != null && feeConfigInfo.size() > 0){
+        if (feeConfigInfo != null && feeConfigInfo.size() > 0) {
 
             //费用配置信息
             List<Map> businessFeeConfigInfos = feeConfigServiceDaoImpl.getBusinessFeeConfigInfo(delInfo);
             //除非程序出错了，这里不会为空
-            if(businessFeeConfigInfos == null || businessFeeConfigInfos.size() == 0){
-                throw new ListenerExecuteException(ResponseConstant.RESULT_CODE_INNER_ERROR,"撤单失败（feeConfig），程序内部异常,请检查！ "+delInfo);
+            if (businessFeeConfigInfos == null || businessFeeConfigInfos.size() == 0) {
+                throw new ListenerExecuteException(ResponseConstant.RESULT_CODE_INNER_ERROR, "撤单失败（feeConfig），程序内部异常,请检查！ " + delInfo);
             }
-            for (int _feeConfigIndex = 0; _feeConfigIndex < businessFeeConfigInfos.size();_feeConfigIndex++) {
+            for (int _feeConfigIndex = 0; _feeConfigIndex < businessFeeConfigInfos.size(); _feeConfigIndex++) {
                 Map businessFeeConfigInfo = businessFeeConfigInfos.get(_feeConfigIndex);
-                flushBusinessFeeConfigInfo(businessFeeConfigInfo,StatusConstant.STATUS_CD_VALID);
+                flushBusinessFeeConfigInfo(businessFeeConfigInfo, StatusConstant.STATUS_CD_VALID);
                 feeConfigServiceDaoImpl.updateFeeConfigInfoInstance(businessFeeConfigInfo);
             }
         }
@@ -151,30 +153,28 @@ public class UpdateFeeConfigInfoListener extends AbstractFeeConfigBusinessServic
     }
 
 
-
     /**
      * 处理 businessFeeConfig 节点
-     * @param business 总的数据节点
+     *
+     * @param business          总的数据节点
      * @param businessFeeConfig 费用配置节点
      */
-    private void doBusinessFeeConfig(Business business,JSONObject businessFeeConfig){
+    private void doBusinessFeeConfig(Business business, JSONObject businessFeeConfig) {
 
-        Assert.jsonObjectHaveKey(businessFeeConfig,"configId","businessFeeConfig 节点下没有包含 configId 节点");
+        Assert.jsonObjectHaveKey(businessFeeConfig, "configId", "businessFeeConfig 节点下没有包含 configId 节点");
 
-        if(businessFeeConfig.getString("configId").startsWith("-")){
-            throw new ListenerExecuteException(ResponseConstant.RESULT_PARAM_ERROR,"configId 错误，不能自动生成（必须已经存在的configId）"+businessFeeConfig);
+        if (businessFeeConfig.getString("configId").startsWith("-")) {
+            throw new ListenerExecuteException(ResponseConstant.RESULT_PARAM_ERROR, "configId 错误，不能自动生成（必须已经存在的configId）" + businessFeeConfig);
         }
         //自动保存DEL
-        autoSaveDelBusinessFeeConfig(business,businessFeeConfig);
+        autoSaveDelBusinessFeeConfig(business, businessFeeConfig);
 
-        businessFeeConfig.put("bId",business.getbId());
+        businessFeeConfig.put("bId", business.getbId());
         businessFeeConfig.put("operate", StatusConstant.OPERATE_ADD);
         //保存费用配置信息
         feeConfigServiceDaoImpl.saveBusinessFeeConfigInfo(businessFeeConfig);
 
     }
-
-
 
 
     public IFeeConfigServiceDao getFeeConfigServiceDaoImpl() {
@@ -184,7 +184,6 @@ public class UpdateFeeConfigInfoListener extends AbstractFeeConfigBusinessServic
     public void setFeeConfigServiceDaoImpl(IFeeConfigServiceDao feeConfigServiceDaoImpl) {
         this.feeConfigServiceDaoImpl = feeConfigServiceDaoImpl;
     }
-
 
 
 }

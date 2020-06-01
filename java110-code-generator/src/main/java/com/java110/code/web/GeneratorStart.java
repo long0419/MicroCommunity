@@ -1,19 +1,15 @@
 package com.java110.code.web;
 
 import com.alibaba.fastjson.JSONObject;
-import com.java110.code.BaseGenerator;
+import com.java110.code.back.BaseGenerator;
 
 public class GeneratorStart extends BaseGenerator {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         //加载配置
         StringBuffer sb = readFile(GeneratorStart.class.getResource("/web/template_1.json").getFile());
 
         JSONObject data = JSONObject.parseObject(sb.toString());
-
-
-        GeneratorFlow flow = new GeneratorFlow();
-        flow.generator(data);
 
 
         GeneratorManagerComponent managerComponent = new GeneratorManagerComponent();

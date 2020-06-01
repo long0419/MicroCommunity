@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.entity.center.Business;
+import com.java110.po.purchase.ResourceStorePo;
 import com.java110.store.dao.IResourceStoreServiceDao;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
@@ -61,27 +62,26 @@ public class DeleteResourceStoreInfoListener extends AbstractResourceStoreBusine
 
         Assert.notEmpty(data, "没有datas 节点，或没有子节点需要处理");
 
+
         //处理 businessResourceStore 节点
-        if (data.containsKey("businessResourceStore")) {
-            //处理 businessResourceStore 节点
-            if (data.containsKey("businessResourceStore")) {
-                Object _obj = data.get("businessResourceStore");
-                JSONArray businessResourceStores = null;
+        if (data.containsKey(ResourceStorePo.class.getSimpleName())) {
+            Object _obj = data.get(ResourceStorePo.class.getSimpleName());
+            JSONArray businessResourceStores = null;
+            if (_obj instanceof JSONObject) {
+                businessResourceStores = new JSONArray();
+                businessResourceStores.add(_obj);
+            } else {
+                businessResourceStores = (JSONArray) _obj;
+            }
+            //JSONObject businessResourceStore = data.getJSONObject("businessResourceStore");
+            for (int _resourceResourceStoreIndex = 0; _resourceResourceStoreIndex < businessResourceStores.size(); _resourceResourceStoreIndex++) {
+                JSONObject businessResourceStore = businessResourceStores.getJSONObject(_resourceResourceStoreIndex);
+                doBusinessResourceStore(business, businessResourceStore);
                 if (_obj instanceof JSONObject) {
-                    businessResourceStores = new JSONArray();
-                    businessResourceStores.add(_obj);
-                } else {
-                    businessResourceStores = (JSONArray) _obj;
-                }
-                //JSONObject businessResourceStore = data.getJSONObject("businessResourceStore");
-                for (int _resourceResourceStoreIndex = 0; _resourceResourceStoreIndex < businessResourceStores.size(); _resourceResourceStoreIndex++) {
-                    JSONObject businessResourceStore = businessResourceStores.getJSONObject(_resourceResourceStoreIndex);
-                    doBusinessResourceStore(business, businessResourceStore);
-                    if (_obj instanceof JSONObject) {
-                        dataFlowContext.addParamOut("resId", businessResourceStore.getString("resId"));
-                    }
+                    dataFlowContext.addParamOut("resId", businessResourceStore.getString("resId"));
                 }
             }
+
         }
 
 

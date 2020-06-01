@@ -10,11 +10,10 @@ import com.java110.core.smo.hardwareAdapation.IMachineInnerServiceSMO;
 import com.java110.core.smo.room.IRoomInnerServiceSMO;
 import com.java110.core.smo.unit.IUnitInnerServiceSMO;
 import com.java110.dto.RoomDto;
-import com.java110.dto.UnitDto;
 import com.java110.dto.community.CommunityDto;
 import com.java110.dto.hardwareAdapation.MachineDto;
 import com.java110.dto.unit.FloorAndUnitDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeMachineConstant;
 import com.java110.utils.util.Assert;
 import com.java110.utils.util.BeanConvertUtil;
@@ -125,6 +124,9 @@ public class ListMachinesListener extends AbstractServiceApiListener {
         //批量处理 房屋信息
         refreshRooms(machines);
 
+        //位置未分配时
+        refreshOther(machines);
+
     }
 
     /**
@@ -140,6 +142,7 @@ public class ListMachinesListener extends AbstractServiceApiListener {
 
             if (!"2000".equals(machineDto.getLocationTypeCd())
                     && !"3000".equals(machineDto.getLocationTypeCd())
+                            && !"4000".equals(machineDto.getLocationTypeCd())
             ) {
                 communityIds.add(machineDto.getLocationObjId());
                 tmpMachineDtos.add(machineDto);
@@ -238,6 +241,22 @@ public class ListMachinesListener extends AbstractServiceApiListener {
                 }
             }
         }
+    }
+
+    /**
+     * 获取批量单元
+     *
+     * @param machines 设备信息
+     * @return 批量userIds 信息
+     */
+    private void refreshOther(List<MachineDto> machines) {
+        for (MachineDto machineDto : machines) {
+
+            if ("4000".equals(machineDto.getLocationTypeCd())) {
+               machineDto.setLocationObjName("未分配");
+            }
+        }
+
     }
 
     public ICommunityInnerServiceSMO getCommunityInnerServiceSMOImpl() {

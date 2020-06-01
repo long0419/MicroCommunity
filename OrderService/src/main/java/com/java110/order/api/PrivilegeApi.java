@@ -1,7 +1,6 @@
 package com.java110.order.api;
 
 import com.java110.core.base.controller.BaseController;
-import com.java110.event.center.DataFlowEventPublishing;
 import com.java110.order.smo.IPrivilegeSMO;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
@@ -16,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 权限API 处理类
@@ -77,6 +74,23 @@ public class PrivilegeApi extends BaseController {
 
         try {
             responseEntity = privilegeSMOImpl.savePrivilegeGroup(privilegeGroupInfo);
+        }catch (Exception e){
+            logger.error("请求订单异常",e);
+            responseEntity =  new ResponseEntity<String>("请求中心服务发生异常，"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally {
+            logger.debug("订单服务返回报文为: {}",responseEntity);
+            return responseEntity;
+        }
+    }
+
+    @RequestMapping(path = "/editPrivilegeGroup",method= RequestMethod.POST)
+    @ApiOperation(value="编辑权限组", notes="test: 返回 200 表示服务受理成功，其他表示失败")
+    @ApiImplicitParam(paramType="query", name = "privilegeGroupInfo", value = "权限信息", required = true, dataType = "String")
+    public ResponseEntity<String> editPrivilegeGroup(@RequestBody String privilegeGroupInfo,HttpServletRequest request){
+        ResponseEntity<String> responseEntity = null;
+
+        try {
+            responseEntity = privilegeSMOImpl.editPrivilegeGroup(privilegeGroupInfo);
         }catch (Exception e){
             logger.error("请求订单异常",e);
             responseEntity =  new ResponseEntity<String>("请求中心服务发生异常，"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

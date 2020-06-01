@@ -1,18 +1,15 @@
 package com.java110.api.listener;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.java110.utils.constant.*;
 import com.java110.utils.exception.ListenerExecuteException;
 import com.java110.utils.util.Assert;
 import com.java110.utils.util.StringUtil;
 import com.java110.core.context.DataFlowContext;
-import com.java110.core.factory.DataFlowFactory;
 import com.java110.core.smo.community.ICommunityInnerServiceSMO;
 import com.java110.dto.CommunityMemberDto;
 import com.java110.entity.center.AppService;
-import com.java110.event.service.api.ServiceDataFlowEvent;
-import com.java110.event.service.api.ServiceDataFlowListener;
+import com.java110.core.event.service.api.ServiceDataFlowListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +34,7 @@ public abstract class AbstractServiceApiDataFlowListener implements ServiceDataF
     protected static final int DEFAULT_ORDER = 1;
     //默认序列
     protected static final int DEFAULT_SEQ = 1;
-    protected static final int MAX_ROW = 50;
+    protected static final int MAX_ROW = 10000;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -45,92 +42,6 @@ public abstract class AbstractServiceApiDataFlowListener implements ServiceDataF
     @Autowired
     private RestTemplate restTemplateNoLoadBalanced;
 
-    /**
-     * 调用下游服务
-     *
-     * @param event
-     * @return
-     */
-    protected ResponseEntity<String> callService(ServiceDataFlowEvent event) {
-
-        DataFlowContext dataFlowContext = event.getDataFlowContext();
-        AppService service = event.getAppService();
-        return callService(dataFlowContext, service, dataFlowContext.getReqJson());
-    }
-
-
-    /**
-     * 调用下游服务
-     *
-     * @param context
-     * @param serviceCode 下游服务
-     * @return
-     */
-    protected ResponseEntity<String> callService(DataFlowContext context, String serviceCode, Map paramIn) {
-
-        ResponseEntity responseEntity = null;
-        AppService appService = DataFlowFactory.getService(context.getAppId(), serviceCode);
-        if (appService == null) {
-            responseEntity = new ResponseEntity<String>("当前没有权限访问" + ServiceCodeConstant.SERVICE_CODE_QUERY_STORE_USERS, HttpStatus.UNAUTHORIZED);
-            context.setResponseEntity(responseEntity);
-            return responseEntity;
-        }
-        return callService(context, appService, paramIn);
-    }
-
-    /**
-     * 调用下游服务
-     *
-     * @param context
-     * @param appService 下游服务
-     * @return
-     */
-    protected ResponseEntity<String> callService(DataFlowContext context, AppService appService, Map paramIn) {
-
-        ResponseEntity responseEntity = null;
-        if (paramIn == null || paramIn.isEmpty()) {
-            paramIn = context.getReqJson();
-        }
-
-        RestTemplate tmpRestTemplate = appService.getServiceCode().startsWith("out.") ? restTemplateNoLoadBalanced : restTemplate;
-
-        String serviceUrl = appService.getUrl();
-        HttpEntity<String> httpEntity = null;
-        HttpHeaders header = new HttpHeaders();
-        for (String key : context.getRequestCurrentHeaders().keySet()) {
-            if (CommonConstant.HTTP_SERVICE.toLowerCase().equals(key.toLowerCase())) {
-                continue;
-            }
-            header.add(key, context.getRequestCurrentHeaders().get(key));
-        }
-        header.add(CommonConstant.HTTP_SERVICE.toLowerCase(), appService.getServiceCode());
-        try {
-            if (CommonConstant.HTTP_METHOD_GET.equals(appService.getMethod())) {
-                serviceUrl += "?";
-                for (Object key : paramIn.keySet()) {
-                    serviceUrl += (key + "=" + paramIn.get(key) + "&");
-                }
-
-                if (serviceUrl.endsWith("&")) {
-                    serviceUrl = serviceUrl.substring(0, serviceUrl.lastIndexOf("&"));
-                }
-                httpEntity = new HttpEntity<String>("", header);
-                responseEntity = tmpRestTemplate.exchange(serviceUrl, HttpMethod.GET, httpEntity, String.class);
-            } else if (CommonConstant.HTTP_METHOD_PUT.equals(appService.getMethod())) {
-                httpEntity = new HttpEntity<String>(JSONObject.toJSONString(paramIn), header);
-                responseEntity = tmpRestTemplate.exchange(serviceUrl, HttpMethod.PUT, httpEntity, String.class);
-            } else if (CommonConstant.HTTP_METHOD_DELETE.equals(appService.getMethod())) {
-                httpEntity = new HttpEntity<String>(JSONObject.toJSONString(paramIn), header);
-                responseEntity = tmpRestTemplate.exchange(serviceUrl, HttpMethod.DELETE, httpEntity, String.class);
-            } else {
-                httpEntity = new HttpEntity<String>(JSONObject.toJSONString(paramIn), header);
-                responseEntity = tmpRestTemplate.exchange(serviceUrl, HttpMethod.POST, httpEntity, String.class);
-            }
-        } catch (HttpStatusCodeException e) { //这里spring 框架 在4XX 或 5XX 时抛出 HttpServerErrorException 异常，需要重新封装一下
-            responseEntity = new ResponseEntity<String>("请求下游系统异常，" + e.getResponseBodyAsString(), e.getStatusCode());
-        }
-        return responseEntity;
-    }
 
 
     /**
@@ -175,7 +86,7 @@ public abstract class AbstractServiceApiDataFlowListener implements ServiceDataF
                 responseEntity = tmpRestTemplate.exchange(service.getUrl(), HttpMethod.POST, httpEntity, String.class);
             }
         } catch (HttpStatusCodeException e) { //这里spring 框架 在4XX 或 5XX 时抛出 HttpServerErrorException 异常，需要重新封装一下
-            responseEntity = new ResponseEntity<String>("请求下游系统异常，" + e.getResponseBodyAsString(), e.getStatusCode());
+            responseEntity = new ResponseEntity<String>( e.getResponseBodyAsString(), e.getStatusCode());
         }
 
         logger.debug("API 服务调用下游服务请求：{}，返回为：{}", httpEntity, responseEntity);
@@ -257,95 +168,6 @@ public abstract class AbstractServiceApiDataFlowListener implements ServiceDataF
 
             dataFlowContext.setResponseEntity(newResponseEntity);
         }
-    }
-
-
-    /**
-     * 将rest 协议转为 订单协议
-     *
-     * @param business
-     * @return
-     */
-    protected JSONObject restToCenterProtocol(JSONObject business, Map<String, String> headers) {
-
-        JSONObject centerProtocol = JSONObject.parseObject("{\"orders\":{},\"business\":[]}");
-        freshOrderProtocol(centerProtocol.getJSONObject("orders"), headers);
-        centerProtocol.getJSONArray("business").add(business);
-        return centerProtocol;
-    }
-
-    /**
-     * 将rest 协议转为 订单协议
-     *
-     * @param businesses 多个业务
-     * @param headers    订单头信息
-     * @return
-     */
-    protected JSONObject restToCenterProtocol(JSONArray businesses, Map<String, String> headers) {
-
-        JSONObject centerProtocol = JSONObject.parseObject("{\"orders\":{},\"business\":[]}");
-        freshOrderProtocol(centerProtocol.getJSONObject("orders"), headers);
-        centerProtocol.put("business", businesses);
-        return centerProtocol;
-    }
-
-    /**
-     * 刷入order信息
-     *
-     * @param orders  订单信息
-     * @param headers 头部信息
-     */
-    protected void freshOrderProtocol(JSONObject orders, Map<String, String> headers) {
-        for (String key : headers.keySet()) {
-
-            if (CommonConstant.HTTP_APP_ID.equals(key)) {
-                orders.put("appId", headers.get(key));
-            }
-            if (CommonConstant.HTTP_TRANSACTION_ID.equals(key)) {
-                orders.put("transactionId", headers.get(key));
-            }
-            if (CommonConstant.HTTP_SIGN.equals(key)) {
-                orders.put("sign", headers.get(key));
-            }
-
-            if (CommonConstant.HTTP_REQ_TIME.equals(key)) {
-                orders.put("requestTime", headers.get(key));
-            }
-            if (CommonConstant.HTTP_ORDER_TYPE_CD.equals(key)) {
-                orders.put("orderTypeCd", headers.get(key));
-            }
-            if (CommonConstant.HTTP_USER_ID.equals(key)) {
-                orders.put("userId", headers.get(key));
-            }
-        }
-
-    }
-
-    /**
-     * 刷入order信息
-     *
-     * @param httpHeaders http 头信息
-     * @param headers     头部信息
-     */
-    protected void freshHttpHeader(HttpHeaders httpHeaders, Map<String, String> headers) {
-        for (String key : headers.keySet()) {
-
-            if (CommonConstant.HTTP_APP_ID.equals(key)) {
-                httpHeaders.add("app_id", headers.get(key));
-            }
-            if (CommonConstant.HTTP_TRANSACTION_ID.equals(key)) {
-                httpHeaders.add("transaction_id", headers.get(key));
-            }
-
-            if (CommonConstant.HTTP_REQ_TIME.equals(key)) {
-                httpHeaders.add("req_time", headers.get(key));
-            }
-
-            if (CommonConstant.HTTP_USER_ID.equals(key)) {
-                httpHeaders.add("user_id", headers.get(key));
-            }
-        }
-
     }
 
     /**

@@ -95,6 +95,7 @@ public class GenerateCodeFactory {
     public static final String CODE_PREFIX_repairId = "82";
     public static final String CODE_PREFIX_ruId = "83";
     public static final String CODE_PREFIX_orgId = "84";
+    public static final String CODE_PREFIX_orgCommunityId = "85";
     public static final String CODE_PREFIX_relId = "84";
     public static final String CODE_PREFIX_resId = "85";
     public static final String CODE_PREFIX_auditUserId = "86";
@@ -109,6 +110,23 @@ public class GenerateCodeFactory {
     public static final String CODE_PREFIX_msgReadId = "95";
     public static final String CODE_PREFIX_advertId = "96";
     public static final String CODE_PREFIX_advertItemId = "97";
+    public static final String CODE_PREFIX_appUserId = "98";
+    public static final String CODE_PREFIX_activitiesId = "99";
+    public static final String CODE_PREFIX_paId = "10";
+    public static final String CODE_PREFIX_bwId = "11";
+    public static final String CODE_PREFIX_inoutId = "12";
+    public static final String CODE_PREFIX_inspectionId = "13";
+    public static final String CODE_PREFIX_inspectionRouteId = "50";
+    public static final String CODE_PREFIX_irpRelId = "51";
+    public static final String CODE_PREFIX_inspectionPlanId = "14";
+    public static final String CODE_PREFIX_ipStaffId = "15";
+    public static final String CODE_PREFIX_taskId = "52";
+    public static final String CODE_PREFIX_taskDetailId = "53";
+    public static final String CODE_PREFIX_applyOrderId = "15";
+    public static final String CODE_PREFIX_fastuserId = "68";
+    public static final String CODE_PREFIX_junkRequirementId = "69";
+    public static final String CODE_PREFIX_returnFeeId = "70";
+    public static final String CODE_PREFIX_weChatId = "71";
 
 
     /**
@@ -815,6 +833,20 @@ public class GenerateCodeFactory {
         Random random = new Random();
         String result = "";
         for (int i = 0; i < 4; i++) {
+            result += random.nextInt(10);
+        }
+        return result;
+    }
+
+    /**
+     * 获取随机数
+     *
+     * @return
+     */
+    public static String getRandomCode(int bit) {
+        Random random = new Random();
+        String result = "";
+        for (int i = 0; i < bit; i++) {
             result += random.nextInt(10);
         }
         return result;

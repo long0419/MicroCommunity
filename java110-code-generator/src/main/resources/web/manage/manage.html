@@ -1,4 +1,4 @@
-<div id="component" class="wrapper wrapper-content animated fadeInRight ecommerce">
+<div >
     <div class="row">
         <div class="col-lg-12">
             <div class="ibox ">
@@ -52,7 +52,7 @@
                         </tfoot>
                     </table>
                     <!-- 分页 -->
-                    <vc:create name="pagination"></vc:create>
+                    <vc:create path="frame/pagination"></vc:create>
                 </div>
             </div>
         </div>
@@ -60,11 +60,11 @@
 
     @@vcCreate@@
 
-    <vc:create name="add@@TemplateCode@@"
+    <vc:create path="@@directories@@/add@@TemplateCode@@"
                callBackListener=""
                callBackFunction=""
     ></vc:create>
-    <vc:create name="edit@@TemplateCode@@"></vc:create>
-    <vc:create name="delete@@TemplateCode@@"></vc:create>
+    <vc:create path="@@directories@@/edit@@TemplateCode@@"></vc:create>
+    <vc:create path="@@directories@@/delete@@TemplateCode@@"></vc:create>
 
 </div>

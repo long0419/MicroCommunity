@@ -14,6 +14,8 @@ public class ApiMachineTranslateDataVo implements Serializable {
     private String objId;
     private String state;
     private String stateName;
+    private String createTime;
+    private String updateTime;
 
     public String getMachineTranslateId() {
         return machineTranslateId;
@@ -85,5 +87,21 @@ public class ApiMachineTranslateDataVo implements Serializable {
 
     public void setStateName(String stateName) {
         this.stateName = stateName;
+    }
+
+    public String getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(String createTime) {
+        this.createTime = createTime;
+    }
+
+    public String getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(String updateTime) {
+        this.updateTime = updateTime;
     }
 }

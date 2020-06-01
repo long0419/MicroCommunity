@@ -1,7 +1,7 @@
 package com.java110.code.relationship;
 
 import com.alibaba.fastjson.JSONObject;
-import com.java110.code.BaseGenerator;
+import com.java110.code.back.BaseGenerator;
 import com.java110.code.web.GeneratorStart;
 
 /**
@@ -16,7 +16,7 @@ public class GeneratorRelationShipStart extends BaseGenerator {
 
     public static void main(String[] args) {
 
-        StringBuffer sb = readFile(GeneratorStart.class.getResource("/relationship/template_1.json").getFile());
+        StringBuffer sb = readFile(GeneratorStart.class.getResource("/relationship/template_complaint.json").getFile());
 
         JSONObject data = JSONObject.parseObject(sb.toString());
 

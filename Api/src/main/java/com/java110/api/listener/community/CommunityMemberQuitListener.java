@@ -2,17 +2,18 @@ package com.java110.api.listener.community;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.java110.api.bmo.community.ICommunityBMO;
 import com.java110.api.listener.AbstractServiceApiDataFlowListener;
-import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.CommonConstant;
 import com.java110.utils.constant.ServiceCodeConstant;
 import com.java110.utils.util.Assert;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.entity.center.AppService;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,8 @@ import org.springframework.http.ResponseEntity;
 @Java110Listener("communityMemberQuitListener")
 public class CommunityMemberQuitListener extends AbstractServiceApiDataFlowListener {
     private final static Logger logger = LoggerFactory.getLogger(CommunityMemberQuitListener.class);
+    @Autowired
+    private ICommunityBMO communityBMOImpl;
 
     @Override
     public String getServiceCode() {
@@ -50,7 +53,7 @@ public class CommunityMemberQuitListener extends AbstractServiceApiDataFlowListe
 
         //根据 memberId communityId memberTypeCd  query.myCommunity.byMember
 
-        ResponseEntity<String> responseEntity = super.callService(dataFlowContext,"query.myCommunity.byMember",paramObj);
+        ResponseEntity<String> responseEntity = communityBMOImpl.callService(dataFlowContext,"query.myCommunity.byMember",paramObj);
 
         if(responseEntity.getStatusCode() != HttpStatus.OK){
             dataFlowContext.setResponseEntity(responseEntity);
@@ -76,14 +79,9 @@ public class CommunityMemberQuitListener extends AbstractServiceApiDataFlowListe
         dataFlowContext.getRequestCurrentHeaders().put(CommonConstant.HTTP_ORDER_TYPE_CD,"D");
         JSONArray businesses = new JSONArray();
         //添加商户
-        businesses.add(deleteCommunityMember(paramObj));
+        businesses.add(communityBMOImpl.deleteCommunityMember(paramObj));
 
-        JSONObject paramInObj = super.restToCenterProtocol(businesses,dataFlowContext.getRequestCurrentHeaders());
-
-        //将 rest header 信息传递到下层服务中去
-        super.freshHttpHeader(header,dataFlowContext.getRequestCurrentHeaders());
-
-         responseEntity = this.callService(dataFlowContext,service.getServiceCode(),paramInObj);
+         responseEntity = communityBMOImpl.callService(dataFlowContext,service.getServiceCode(),businesses);
 
         dataFlowContext.setResponseEntity(responseEntity);
     }
@@ -100,24 +98,6 @@ public class CommunityMemberQuitListener extends AbstractServiceApiDataFlowListe
         Assert.jsonObjectHaveKey(paramIn,"communityId","请求报文中未包含communityId");
         Assert.jsonObjectHaveKey(paramIn,"memberId","请求报文中未包含memberId");
         Assert.jsonObjectHaveKey(paramIn,"memberTypeCd","请求报文中未包含memberTypeCd");
-    }
-
-    /**
-     * 添加小区成员
-     * @param paramInJson
-     * @return
-     */
-    private JSONObject deleteCommunityMember(JSONObject paramInJson){
-
-        JSONObject business = JSONObject.parseObject("{\"datas\":{}}");
-        business.put(CommonConstant.HTTP_BUSINESS_TYPE_CD, BusinessTypeConstant.BUSINESS_TYPE_MEMBER_QUIT_COMMUNITY);
-        business.put(CommonConstant.HTTP_SEQ,2);
-        business.put(CommonConstant.HTTP_INVOKE_MODEL,CommonConstant.HTTP_INVOKE_MODEL_S);
-        JSONObject businessCommunityMember = new JSONObject();
-        businessCommunityMember.put("communityMemberId",paramInJson.getString("communityMemberId"));
-        business.getJSONObject(CommonConstant.HTTP_BUSINESS_DATAS).put("businessCommunityMember",businessCommunityMember);
-
-        return business;
     }
 
     @Override

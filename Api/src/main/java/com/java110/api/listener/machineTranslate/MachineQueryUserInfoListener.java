@@ -11,13 +11,14 @@ import com.java110.core.smo.hardwareAdapation.IApplicationKeyInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IMachineInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IMachineTranslateInnerServiceSMO;
 import com.java110.core.smo.owner.IOwnerInnerServiceSMO;
-import com.java110.dto.OwnerDto;
+
 import com.java110.dto.community.CommunityDto;
 import com.java110.dto.file.FileDto;
 import com.java110.dto.file.FileRelDto;
 import com.java110.dto.hardwareAdapation.ApplicationKeyDto;
 import com.java110.dto.hardwareAdapation.MachineTranslateDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.dto.owner.OwnerDto;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.cache.CommonCache;
 import com.java110.utils.cache.MappingCache;
 import com.java110.utils.constant.ServiceCodeMachineTranslateConstant;
@@ -32,7 +33,6 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.ParseException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -97,7 +97,7 @@ public class MachineQueryUserInfoListener extends BaseMachineListener {
         outParam.put("code", 0);
         outParam.put("message", "success");
         JSONArray data = null;
-        String communityId = reqHeader.get("communityId");
+        String communityId = reqJson.containsKey("communityId") ? reqJson.getString("communityId") : reqHeader.get("communityId");
         HttpHeaders httpHeaders = super.getHeader(context);
         //检查是否存在该用户
         OwnerDto ownerDto = new OwnerDto();
@@ -230,6 +230,7 @@ public class MachineQueryUserInfoListener extends BaseMachineListener {
         }
         FileDto fileDto = new FileDto();
         fileDto.setFileId(fileRelDtos.get(0).getFileSaveName());
+        fileDto.setFileSaveName(fileRelDtos.get(0).getFileSaveName());
         fileDto.setCommunityId(communityId);
         List<FileDto> fileDtos = fileInnerServiceSMOImpl.queryFiles(fileDto);
         if (fileDtos == null || fileDtos.size() != 1) {
@@ -245,10 +246,8 @@ public class MachineQueryUserInfoListener extends BaseMachineListener {
         dataObj.put("groupid", communityId);
         dataObj.put("group", communityDtos.get(0).getName());
         dataObj.put("name", ownerDto.getName());
-        dataObj.put("faceBase64", "data:image/jpeg;base64," + fileDtos.get(0).getContext()
-                .replace("data:image/webp;base64,", "")
-                .replace("data:image/png;base64,", "")
-                .replace("data:image/jpeg;base64,", ""));
+        String tmpImg = fileDtos.get(0).getContext();
+        dataObj.put("faceBase64",  tmpImg);
         dataObj.put("idNumber", ownerDto.getIdCard());
         dataObj.put("startTime", ownerDto.getCreateTime().getTime());
         try {

@@ -1,12 +1,12 @@
 package com.java110.community.listener.parkingSpace;
 
 import com.alibaba.fastjson.JSONObject;
+import com.java110.community.dao.IParkingSpaceServiceDao;
+import com.java110.entity.center.Business;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
-import com.java110.community.dao.IParkingSpaceServiceDao;
-import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +42,7 @@ public abstract class AbstractParkingSpaceBusinessServiceDataFlowListener extend
         businessParkingSpaceInfo.put("typeCd", businessParkingSpaceInfo.get("type_cd"));
         businessParkingSpaceInfo.put("num", businessParkingSpaceInfo.get("num"));
         businessParkingSpaceInfo.put("psId", businessParkingSpaceInfo.get("ps_id"));
+        businessParkingSpaceInfo.put("paId", businessParkingSpaceInfo.get("pa_id"));
         businessParkingSpaceInfo.put("remark", businessParkingSpaceInfo.get("remark"));
         businessParkingSpaceInfo.put("state", businessParkingSpaceInfo.get("state"));
         businessParkingSpaceInfo.put("communityId", businessParkingSpaceInfo.get("community_id"));
@@ -75,6 +76,7 @@ public abstract class AbstractParkingSpaceBusinessServiceDataFlowListener extend
         currentParkingSpaceInfo.put("typeCd", currentParkingSpaceInfo.get("type_cd"));
         currentParkingSpaceInfo.put("num", currentParkingSpaceInfo.get("num"));
         currentParkingSpaceInfo.put("psId", currentParkingSpaceInfo.get("ps_id"));
+        currentParkingSpaceInfo.put("paId", currentParkingSpaceInfo.get("pa_id"));
         currentParkingSpaceInfo.put("remark", currentParkingSpaceInfo.get("remark"));
         currentParkingSpaceInfo.put("state", currentParkingSpaceInfo.get("state"));
         currentParkingSpaceInfo.put("communityId", currentParkingSpaceInfo.get("community_id"));
@@ -83,6 +85,12 @@ public abstract class AbstractParkingSpaceBusinessServiceDataFlowListener extend
 
         currentParkingSpaceInfo.put("operate", StatusConstant.OPERATE_DEL);
         getParkingSpaceServiceDaoImpl().saveBusinessParkingSpaceInfo(currentParkingSpaceInfo);
+
+        for (Object key : currentParkingSpaceInfo.keySet()) {
+            if (businessParkingSpace.get(key) == null) {
+                businessParkingSpace.put(key.toString(), currentParkingSpaceInfo.get(key));
+            }
+        }
     }
 
 

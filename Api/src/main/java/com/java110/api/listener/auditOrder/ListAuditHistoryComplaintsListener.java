@@ -6,10 +6,11 @@ import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.smo.complaintUser.IComplaintUserInnerServiceSMO;
 import com.java110.entity.audit.AuditUser;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeAuditUserConstant;
 import com.java110.utils.util.Assert;
 import com.java110.utils.util.BeanConvertUtil;
+import com.java110.utils.util.StringUtil;
 import com.java110.vo.api.complaint.ApiComplaintDataVo;
 import com.java110.vo.api.complaint.ApiComplaintVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,10 @@ public class ListAuditHistoryComplaintsListener extends AbstractServiceApiListen
         auditUser.setCommunityId(reqJson.getString("communityId"));
         auditUser.setPage(reqJson.getInteger("page"));
         auditUser.setRow(reqJson.getInteger("row"));
+
+        if(reqJson.containsKey("process")&& !StringUtil.isEmpty(reqJson.getString("process"))){
+            auditUser.setAuditLink(reqJson.getString("process"));
+        }
 
         long count = complaintUserInnerServiceSMOImpl.getUserHistoryTaskCount(auditUser);
 

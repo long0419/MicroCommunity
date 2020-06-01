@@ -29,7 +29,7 @@ import com.java110.core.factory.GenerateCodeFactory;
 import com.java110.entity.center.AppRoute;
 import com.java110.entity.center.AppService;
 import com.java110.entity.center.DataFlowLinksCost;
-import com.java110.event.service.api.ServiceDataFlowEventPublishing;
+import com.java110.core.event.service.api.ServiceDataFlowEventPublishing;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +85,7 @@ public class ApiServiceSMOImpl extends LoggerEngine implements IApiServiceSMO {
                 reqJson = decrypt(reqJson, headers);
             }
 
-            //1.0 创建数据流
+            //1.0 创建数据流 appId serviceCode
             dataFlow = DataFlowFactory.newInstance(ApiDataFlow.class).builder(reqJson, headers);
 
             //2.0 加载配置信息
@@ -102,7 +102,7 @@ public class ApiServiceSMOImpl extends LoggerEngine implements IApiServiceSMO {
         } catch (DecryptException e) { //解密异常
             responseEntity = new ResponseEntity<String>("解密异常：" + e.getMessage(), HttpStatus.NON_AUTHORITATIVE_INFORMATION);
         } catch (BusinessException e) {
-            responseEntity = new ResponseEntity<String>("业务处理异常：" + e.getMessage(), HttpStatus.BAD_REQUEST);
+            responseEntity = new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NoAuthorityException e) {
             responseEntity = new ResponseEntity<String>("鉴权失败：" + e.getMessage(), HttpStatus.UNAUTHORIZED);
         } catch (InitConfigDataException e) {
@@ -244,7 +244,7 @@ public class ApiServiceSMOImpl extends LoggerEngine implements IApiServiceSMO {
         if (!StringUtil.isNullOrNone(dataFlow.getAppRoutes().get(0).getSecurityCode())) {
             String sign = AuthenticationFactory.apiDataFlowMd5(dataFlow);
             if (!sign.equals(dataFlow.getReqSign().toLowerCase())) {
-                throw new NoAuthorityException(ResponseConstant.RESULT_CODE_NO_AUTHORITY_ERROR, "签名失败");
+                throw new NoAuthorityException(ResponseConstant.RESULT_CODE_NO_AUTHORITY_ERROR, "签名失败"+sign);
             }
         }
 

@@ -6,7 +6,7 @@ import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
 import com.java110.community.dao.IRoomServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +49,7 @@ public abstract class AbstractRoomBusinessServiceDataFlowListener extends Abstra
         businessRoomInfo.put("roomNum", businessRoomInfo.get("room_num"));
         businessRoomInfo.put("unitId", businessRoomInfo.get("unit_id"));
         businessRoomInfo.put("apartment", businessRoomInfo.get("apartment"));
+        businessRoomInfo.put("communityId", businessRoomInfo.get("community_id"));
         businessRoomInfo.remove("bId");
         businessRoomInfo.put("statusCd", statusCd);
     }
@@ -85,10 +86,16 @@ public abstract class AbstractRoomBusinessServiceDataFlowListener extends Abstra
         currentRoomInfo.put("roomNum", currentRoomInfo.get("room_num"));
         currentRoomInfo.put("unitId", currentRoomInfo.get("unit_id"));
         currentRoomInfo.put("apartment", currentRoomInfo.get("apartment"));
-
+        currentRoomInfo.put("communityId", currentRoomInfo.get("community_id"));
 
         currentRoomInfo.put("operate", StatusConstant.OPERATE_DEL);
         getRoomServiceDaoImpl().saveBusinessRoomInfo(currentRoomInfo);
+
+        for (Object key : currentRoomInfo.keySet()) {
+            if (businessRoom.get(key) == null) {
+                businessRoom.put(key.toString(), currentRoomInfo.get(key));
+            }
+        }
 
         //便于更新数据
         return currentRoomInfo;

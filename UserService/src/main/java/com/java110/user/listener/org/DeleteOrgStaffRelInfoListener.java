@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.entity.center.Business;
+import com.java110.po.org.OrgPo;
+import com.java110.po.org.OrgStaffRelPo;
 import com.java110.user.dao.IOrgStaffRelServiceDao;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
@@ -61,27 +63,26 @@ public class DeleteOrgStaffRelInfoListener extends AbstractOrgStaffRelBusinessSe
 
         Assert.notEmpty(data, "没有datas 节点，或没有子节点需要处理");
 
+
         //处理 businessOrgStaffRel 节点
-        if (data.containsKey("businessOrgStaffRel")) {
-            //处理 businessOrgStaffRel 节点
-            if (data.containsKey("businessOrgStaffRel")) {
-                Object _obj = data.get("businessOrgStaffRel");
-                JSONArray businessOrgStaffRels = null;
+        if (data.containsKey(OrgStaffRelPo.class.getSimpleName())) {
+            Object _obj = data.get(OrgStaffRelPo.class.getSimpleName());
+            JSONArray businessOrgStaffRels = null;
+            if (_obj instanceof JSONObject) {
+                businessOrgStaffRels = new JSONArray();
+                businessOrgStaffRels.add(_obj);
+            } else {
+                businessOrgStaffRels = (JSONArray) _obj;
+            }
+            //JSONObject businessOrgStaffRel = data.getJSONObject("businessOrgStaffRel");
+            for (int _orgStaffRelIndex = 0; _orgStaffRelIndex < businessOrgStaffRels.size(); _orgStaffRelIndex++) {
+                JSONObject businessOrgStaffRel = businessOrgStaffRels.getJSONObject(_orgStaffRelIndex);
+                doBusinessOrgStaffRel(business, businessOrgStaffRel);
                 if (_obj instanceof JSONObject) {
-                    businessOrgStaffRels = new JSONArray();
-                    businessOrgStaffRels.add(_obj);
-                } else {
-                    businessOrgStaffRels = (JSONArray) _obj;
-                }
-                //JSONObject businessOrgStaffRel = data.getJSONObject("businessOrgStaffRel");
-                for (int _orgStaffRelIndex = 0; _orgStaffRelIndex < businessOrgStaffRels.size(); _orgStaffRelIndex++) {
-                    JSONObject businessOrgStaffRel = businessOrgStaffRels.getJSONObject(_orgStaffRelIndex);
-                    doBusinessOrgStaffRel(business, businessOrgStaffRel);
-                    if (_obj instanceof JSONObject) {
-                        dataFlowContext.addParamOut("relId", businessOrgStaffRel.getString("relId"));
-                    }
+                    dataFlowContext.addParamOut("relId", businessOrgStaffRel.getString("relId"));
                 }
             }
+
         }
 
 

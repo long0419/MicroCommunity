@@ -5,7 +5,6 @@ import com.java110.core.base.smo.BaseServiceSMO;
 import com.java110.core.smo.org.IOrgStaffRelInnerServiceSMO;
 import com.java110.core.smo.user.IUserInnerServiceSMO;
 import com.java110.dto.PageDto;
-import com.java110.dto.UserDto;
 import com.java110.dto.org.OrgStaffRelDto;
 import com.java110.user.dao.IOrgStaffRelServiceDao;
 import com.java110.utils.util.BeanConvertUtil;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,6 +51,13 @@ public class OrgStaffRelInnerServiceSMOImpl extends BaseServiceSMO implements IO
     @Override
     public int queryOrgStaffRelsCount(@RequestBody OrgStaffRelDto orgStaffRelDto) {
         return orgStaffRelServiceDaoImpl.queryOrgStaffRelsCount(BeanConvertUtil.beanCovertMap(orgStaffRelDto));
+    }
+
+    @Override
+    public List<OrgStaffRelDto> queryOrgInfoByStaffIds(@RequestBody OrgStaffRelDto orgStaffRelDto) {
+        List<OrgStaffRelDto> orgStaffRels = BeanConvertUtil.covertBeanList(orgStaffRelServiceDaoImpl.queryOrgInfoByStaffIds(BeanConvertUtil.beanCovertMap(orgStaffRelDto)), OrgStaffRelDto.class);
+        return orgStaffRels;
+
     }
 
     public IOrgStaffRelServiceDao getOrgStaffRelServiceDaoImpl() {

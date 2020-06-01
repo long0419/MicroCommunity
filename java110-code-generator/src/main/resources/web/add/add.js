@@ -32,7 +32,7 @@
             },
             save@@TemplateCode@@Info:function(){
                 if(!vc.component.add@@TemplateCode@@Validate()){
-                    vc.message(vc.validate.errInfo);
+                    vc.toast(vc.validate.errInfo);
 
                     return ;
                 }
@@ -45,9 +45,8 @@
                     return ;
                 }
 
-                vc.http.post(
-                    'add@@TemplateCode@@',
-                    'save',
+                vc.http.apiPost(
+                    '@@templateCode@@.save@@TemplateCode@@',
                     JSON.stringify(vc.component.add@@TemplateCode@@Info),
                     {
                         emulateJSON:true

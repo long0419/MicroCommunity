@@ -7,7 +7,7 @@ jedis:
     host: test.redis.java110.com
     port: 6379
     timeout: 3000
-    password:
+    password: hc
 
 eureka:
   instance:
@@ -20,7 +20,7 @@ eureka:
       defaultZone: http://test.java110.com:8761/eureka/
       #defaultZone: http://localhost:8761/eureka/
 server:
-  port: 8008
+  port: 8013
   tomcat:
     uri-encoding: UTF-8
 
@@ -36,6 +36,7 @@ spring:
     database: 0
     host: test.redis.java110.com
     port: 6379
+    password: hc
     pool:
       max-active: 300
       max-wait: 10000

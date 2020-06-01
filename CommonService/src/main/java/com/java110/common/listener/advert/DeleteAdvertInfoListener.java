@@ -6,6 +6,7 @@ import com.java110.common.dao.IAdvertServiceDao;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.entity.center.Business;
+import com.java110.po.advert.AdvertPo;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -61,25 +62,23 @@ public class DeleteAdvertInfoListener extends AbstractAdvertBusinessServiceDataF
 
         Assert.notEmpty(data, "没有datas 节点，或没有子节点需要处理");
 
+
         //处理 businessAdvert 节点
-        if (data.containsKey("businessAdvert")) {
-            //处理 businessAdvert 节点
-            if (data.containsKey("businessAdvert")) {
-                Object _obj = data.get("businessAdvert");
-                JSONArray businessAdverts = null;
+        if (data.containsKey(AdvertPo.class.getSimpleName())) {
+            Object _obj = data.get(AdvertPo.class.getSimpleName());
+            JSONArray businessAdverts = null;
+            if (_obj instanceof JSONObject) {
+                businessAdverts = new JSONArray();
+                businessAdverts.add(_obj);
+            } else {
+                businessAdverts = (JSONArray) _obj;
+            }
+            //JSONObject businessAdvert = data.getJSONObject("businessAdvert");
+            for (int _advertIndex = 0; _advertIndex < businessAdverts.size(); _advertIndex++) {
+                JSONObject businessAdvert = businessAdverts.getJSONObject(_advertIndex);
+                doBusinessAdvert(business, businessAdvert);
                 if (_obj instanceof JSONObject) {
-                    businessAdverts = new JSONArray();
-                    businessAdverts.add(_obj);
-                } else {
-                    businessAdverts = (JSONArray) _obj;
-                }
-                //JSONObject businessAdvert = data.getJSONObject("businessAdvert");
-                for (int _advertIndex = 0; _advertIndex < businessAdverts.size(); _advertIndex++) {
-                    JSONObject businessAdvert = businessAdverts.getJSONObject(_advertIndex);
-                    doBusinessAdvert(business, businessAdvert);
-                    if (_obj instanceof JSONObject) {
-                        dataFlowContext.addParamOut("advertId", businessAdvert.getString("advertId"));
-                    }
+                    dataFlowContext.addParamOut("advertId", businessAdvert.getString("advertId"));
                 }
             }
         }

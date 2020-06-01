@@ -5,8 +5,10 @@ import com.java110.api.listener.AbstractServiceApiListener;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.smo.complaint.IComplaintInnerServiceSMO;
+import com.java110.core.smo.complaintUser.IComplaintUserInnerServiceSMO;
+import com.java110.core.smo.room.IRoomInnerServiceSMO;
 import com.java110.dto.complaint.ComplaintDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeComplaintConstant;
 import com.java110.utils.util.Assert;
 import com.java110.utils.util.BeanConvertUtil;
@@ -29,6 +31,12 @@ public class ListComplaintsListener extends AbstractServiceApiListener {
 
     @Autowired
     private IComplaintInnerServiceSMO complaintInnerServiceSMOImpl;
+
+    @Autowired
+    private IRoomInnerServiceSMO roomInnerServiceSMOImpl;
+
+    @Autowired
+    private IComplaintUserInnerServiceSMO complaintUserInnerServiceSMOImpl;
 
     @Override
     public String getServiceCode() {
@@ -71,7 +79,10 @@ public class ListComplaintsListener extends AbstractServiceApiListener {
         List<ApiComplaintDataVo> complaints = null;
 
         if (count > 0) {
-            complaints = BeanConvertUtil.covertBeanList(complaintInnerServiceSMOImpl.queryComplaints(complaintDto), ApiComplaintDataVo.class);
+            List<ComplaintDto> complaintDtos = complaintInnerServiceSMOImpl.queryComplaints(complaintDto);
+            complaintDtos = freshCurrentUser(complaintDtos);
+            complaints = BeanConvertUtil.covertBeanList(complaintDtos, ApiComplaintDataVo.class);
+
         } else {
             complaints = new ArrayList<>();
         }
@@ -87,4 +98,15 @@ public class ListComplaintsListener extends AbstractServiceApiListener {
         context.setResponseEntity(responseEntity);
 
     }
+
+    private List<ComplaintDto> freshCurrentUser(List<ComplaintDto> complaintDtos) {
+        List<ComplaintDto> tmpComplaintDtos = new ArrayList<>();
+        for(ComplaintDto complaintDto : complaintDtos){
+            complaintDto = complaintUserInnerServiceSMOImpl.getTaskCurrentUser(complaintDto);
+            tmpComplaintDtos.add(complaintDto);
+        }
+
+        return tmpComplaintDtos;
+    }
+
 }

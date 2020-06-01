@@ -6,8 +6,9 @@ import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.smo.resourceStore.IResourceStoreInnerServiceSMO;
 import com.java110.dto.resourceStore.ResourceStoreDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeResourceStoreConstant;
+import com.java110.utils.util.Assert;
 import com.java110.utils.util.BeanConvertUtil;
 import com.java110.vo.api.resourceStore.ApiResourceStoreDataVo;
 import com.java110.vo.api.resourceStore.ApiResourceStoreVo;
@@ -57,6 +58,8 @@ public class ListResourceStoresListener extends AbstractServiceApiListener {
     @Override
     protected void validate(ServiceDataFlowEvent event, JSONObject reqJson) {
         super.validatePageInfo(reqJson);
+        Assert.hasKeyAndValue(reqJson, "communityId", "请求报文中未包含小区ID");
+        Assert.hasKeyAndValue(reqJson, "storeId", "请求报文中未包含商户ID");
     }
 
     @Override

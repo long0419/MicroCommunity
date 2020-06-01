@@ -5,7 +5,7 @@ import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.user.dao.IOwnerRoomRelServiceDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,9 +65,7 @@ public abstract class AbstractOwnerRoomRelBusinessServiceDataFlowListener extend
         }
 
         Map currentOwnerRoomRelInfo = currentOwnerRoomRelInfos.get(0);
-
         currentOwnerRoomRelInfo.put("bId", business.getbId());
-
         currentOwnerRoomRelInfo.put("relId", currentOwnerRoomRelInfo.get("rel_id"));
         currentOwnerRoomRelInfo.put("operate", currentOwnerRoomRelInfo.get("operate"));
         currentOwnerRoomRelInfo.put("remark", currentOwnerRoomRelInfo.get("remark"));
@@ -75,10 +73,15 @@ public abstract class AbstractOwnerRoomRelBusinessServiceDataFlowListener extend
         currentOwnerRoomRelInfo.put("ownerId", currentOwnerRoomRelInfo.get("owner_id"));
         currentOwnerRoomRelInfo.put("userId", currentOwnerRoomRelInfo.get("user_id"));
         currentOwnerRoomRelInfo.put("roomId", currentOwnerRoomRelInfo.get("room_id"));
-
-
         currentOwnerRoomRelInfo.put("operate", StatusConstant.OPERATE_DEL);
         getOwnerRoomRelServiceDaoImpl().saveBusinessOwnerRoomRelInfo(currentOwnerRoomRelInfo);
+
+        for (Object key : currentOwnerRoomRelInfo.keySet()) {
+            if (businessOwnerRoomRel.get(key) == null) {
+                businessOwnerRoomRel.put(key.toString(), currentOwnerRoomRelInfo.get(key));
+            }
+        }
+
     }
 
 

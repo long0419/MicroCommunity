@@ -6,7 +6,7 @@ import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
 import com.java110.community.dao.IUnitServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +83,12 @@ public abstract class AbstractUnitBusinessServiceDataFlowListener extends Abstra
 
         currentUnitInfo.put("operate", StatusConstant.OPERATE_DEL);
         getUnitServiceDaoImpl().saveBusinessUnitInfo(currentUnitInfo);
+
+        for (Object key : currentUnitInfo.keySet()) {
+            if (businessUnit.get(key) == null) {
+                businessUnit.put(key.toString(), currentUnitInfo.get(key));
+            }
+        }
     }
 
 

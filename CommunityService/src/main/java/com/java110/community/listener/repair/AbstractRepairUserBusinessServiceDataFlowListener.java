@@ -3,7 +3,7 @@ package com.java110.community.listener.repair;
 import com.alibaba.fastjson.JSONObject;
 import com.java110.community.dao.IRepairUserServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
@@ -79,6 +79,12 @@ public abstract class AbstractRepairUserBusinessServiceDataFlowListener extends 
 
         currentRepairUserInfo.put("operate", StatusConstant.OPERATE_DEL);
         getRepairUserServiceDaoImpl().saveBusinessRepairUserInfo(currentRepairUserInfo);
+
+        for (Object key : currentRepairUserInfo.keySet()) {
+            if (businessRepairUser.get(key) == null) {
+                businessRepairUser.put(key.toString(), currentRepairUserInfo.get(key));
+            }
+        }
     }
 
 

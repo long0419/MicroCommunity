@@ -11,9 +11,11 @@ public class ApiCommunityDataVo  implements Serializable {
     private String address;
     private String nearbyLandmarks;
     private String cityCode;
+    private String cityName;
     private String mapX;
     private String mapY;
     private String state;
+    private String auditStatusCd;
     private String stateName;
     private String memberId;
     private String storeName;
@@ -139,5 +141,21 @@ public class ApiCommunityDataVo  implements Serializable {
 
     public void setCommunityMemberId(String communityMemberId) {
         this.communityMemberId = communityMemberId;
+    }
+
+    public String getCityName() {
+        return cityName;
+    }
+
+    public void setCityName(String cityName) {
+        this.cityName = cityName;
+    }
+
+    public String getAuditStatusCd() {
+        return auditStatusCd;
+    }
+
+    public void setAuditStatusCd(String auditStatusCd) {
+        this.auditStatusCd = auditStatusCd;
     }
 }

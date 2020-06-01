@@ -2,8 +2,6 @@ package com.java110.api.listener.machineTranslate;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.aliyuncs.utils.StringUtils;
-import com.java110.api.listener.AbstractServiceApiListener;
 import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.smo.community.ICommunityInnerServiceSMO;
@@ -12,24 +10,16 @@ import com.java110.core.smo.file.IFileRelInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IMachineInnerServiceSMO;
 import com.java110.core.smo.hardwareAdapation.IMachineTranslateInnerServiceSMO;
 import com.java110.core.smo.owner.IOwnerInnerServiceSMO;
-import com.java110.dto.OwnerDto;
-import com.java110.dto.community.CommunityDto;
-import com.java110.dto.file.FileDto;
-import com.java110.dto.file.FileRelDto;
-import com.java110.dto.hardwareAdapation.MachineDto;
 import com.java110.dto.hardwareAdapation.MachineTranslateDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeMachineTranslateConstant;
 import com.java110.utils.constant.StatusConstant;
-import com.java110.utils.util.Assert;
-import com.java110.utils.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -85,7 +75,7 @@ public class MachineGetTaskInfoListener extends BaseMachineListener {
         outParam.put("code", 0);
         outParam.put("message", "success");
         JSONArray data = null;
-        String communityId = reqHeader.get("communityId");
+        String communityId = reqJson.containsKey("communityId") ? reqJson.getString("communityId") : reqHeader.get("communityId");
         HttpHeaders httpHeaders = super.getHeader(context);
         //查询删除的业主信息
         MachineTranslateDto machineTranslateDto = new MachineTranslateDto();

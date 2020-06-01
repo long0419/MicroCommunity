@@ -3,7 +3,7 @@ package com.java110.common.listener.msg;
 import com.alibaba.fastjson.JSONObject;
 import com.java110.common.dao.IMsgServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
@@ -79,6 +79,11 @@ public abstract class AbstractMsgBusinessServiceDataFlowListener extends Abstrac
 
         currentMsgInfo.put("operate", StatusConstant.OPERATE_DEL);
         getMsgServiceDaoImpl().saveBusinessMsgInfo(currentMsgInfo);
+        for (Object key : currentMsgInfo.keySet()) {
+            if (businessMsg.get(key) == null) {
+                businessMsg.put(key.toString(), currentMsgInfo.get(key));
+            }
+        }
     }
 
 

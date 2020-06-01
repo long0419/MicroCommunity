@@ -2,7 +2,7 @@ package com.java110.user.listener.org;
 
 import com.alibaba.fastjson.JSONObject;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.user.dao.IOrgServiceDao;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -82,6 +82,12 @@ public abstract class AbstractOrgBusinessServiceDataFlowListener extends Abstrac
 
         currentOrgInfo.put("operate", StatusConstant.OPERATE_DEL);
         getOrgServiceDaoImpl().saveBusinessOrgInfo(currentOrgInfo);
+
+        for (Object key : currentOrgInfo.keySet()) {
+            if (businessOrg.get(key) == null) {
+                businessOrg.put(key.toString(), currentOrgInfo.get(key));
+            }
+        }
     }
 
 

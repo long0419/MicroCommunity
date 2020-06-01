@@ -3,13 +3,13 @@ package com.java110.api.listener.machineTranslate;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.aliyuncs.utils.StringUtils;
-import com.java110.api.listener.AbstractServiceApiListener;
+import com.java110.api.listener.AbstractServiceApiPlusListener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.smo.hardwareAdapation.IMachineInnerServiceSMO;
-import com.java110.core.smo.hardwareAdapation.IMachineTranslateInnerServiceSMO;
 import com.java110.dto.hardwareAdapation.MachineDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.util.Assert;
+import com.java110.utils.util.StringUtil;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * 设备侦听 父类
  */
-public abstract class BaseMachineListener extends AbstractServiceApiListener {
+public abstract class BaseMachineListener extends AbstractServiceApiPlusListener {
 
     /**
      * 校验头部信息
@@ -32,7 +32,7 @@ public abstract class BaseMachineListener extends AbstractServiceApiListener {
         DataFlowContext context = event.getDataFlowContext();
         Map<String, String> reqHeader = context.getRequestHeaders();
         Assert.hasKeyAndValue(reqHeader, "machinecode", "请求报文中未包含设备编码");
-        Assert.hasKeyAndValue(reqHeader, "communityId", "请求报文中未包含小区信息");
+//        Assert.hasKeyAndValue(reqHeader, "communityId", "请求报文中未包含小区信息");
     }
 
     /**
@@ -53,7 +53,8 @@ public abstract class BaseMachineListener extends AbstractServiceApiListener {
         JSONArray data = null;
         Map<String, String> reqHeader = context.getRequestHeaders();
         HttpHeaders headers = new HttpHeaders();
-        if (reqHeader == null || !reqHeader.containsKey("communityId") || StringUtils.isEmpty(reqHeader.get("communityId"))) {
+        String communityId = reqJson.containsKey("communityId") ? reqJson.getString("communityId") : reqHeader.get("communityId");
+        if (StringUtil.isEmpty(communityId)) {
             outParam.put("code", -1);
             outParam.put("message", "请求地址中未包含小区信息");
             responseEntity = new ResponseEntity<>(outParam.toJSONString(), headers, HttpStatus.OK);
@@ -67,7 +68,7 @@ public abstract class BaseMachineListener extends AbstractServiceApiListener {
             headers.add(key, reqHeader.get(key));
         }
 
-        String communityId = reqHeader.get("communityId");
+       // String communityId = reqJson.containsKey("communityId") ? reqJson.getString("communityId") : reqHeader.get("communityId");
 
         if (!reqHeader.containsKey("machinecode") || StringUtils.isEmpty(reqHeader.get("machinecode"))) {
             outParam.put("code", -1);
@@ -78,17 +79,27 @@ public abstract class BaseMachineListener extends AbstractServiceApiListener {
         }
 
         //检查设备是否合法
+        //检查设备是否合法
         MachineDto machineDto = new MachineDto();
         machineDto.setMachineCode(reqHeader.get("machinecode"));
         machineDto.setCommunityId(communityId);
         List<MachineDto> machineDtos = machineInnerServiceSMOImpl.queryMachines(machineDto);
         if (machineDtos == null || machineDtos.size() < 1) {
             outParam.put("code", -1);
-            outParam.put("message", "该设备【" + reqJson.getString("machineCode") + "】未在该小区【" + communityId + "】注册");
+            outParam.put("message", "该设备【" + reqHeader.get("machinecode") + "】未在该小区【" + communityId + "】注册");
             responseEntity = new ResponseEntity<>(outParam.toJSONString(), headers, HttpStatus.OK);
             context.setResponseEntity(responseEntity);
             return false;
         }
+
+        if("1600".equals(machineDtos.get(0).getState())){ //设备禁用状态
+            outParam.put("code", -1);
+            outParam.put("message", "该设备【" + reqHeader.get("machinecode") + "】禁用状态");
+            responseEntity = new ResponseEntity<>(outParam.toJSONString(), headers, HttpStatus.OK);
+            context.setResponseEntity(responseEntity);
+            return false;
+        }
+
 
         reqJson.put("machineCode", machineDtos.get(0).getMachineCode());
         reqJson.put("machineId", machineDtos.get(0).getMachineId());

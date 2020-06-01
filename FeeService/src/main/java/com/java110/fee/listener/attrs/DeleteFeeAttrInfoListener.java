@@ -2,6 +2,7 @@ package com.java110.fee.listener.attrs;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.java110.po.fee.FeeAttrPo;
 import com.java110.utils.constant.BusinessTypeConstant;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
@@ -60,11 +61,9 @@ public class DeleteFeeAttrInfoListener extends AbstractFeeAttrBusinessServiceDat
 
         Assert.notEmpty(data,"没有datas 节点，或没有子节点需要处理");
 
-        //处理 businessFeeAttr 节点
-        if(data.containsKey("businessFeeAttr")){
             //处理 businessFeeAttr 节点
-            if(data.containsKey("businessFeeAttr")){
-                Object _obj = data.get("businessFeeAttr");
+            if(data.containsKey(FeeAttrPo.class.getSimpleName())){
+                Object _obj = data.get(FeeAttrPo.class.getSimpleName());
                 JSONArray businessFeeAttrs = null;
                 if(_obj instanceof JSONObject){
                     businessFeeAttrs = new JSONArray();
@@ -81,7 +80,7 @@ public class DeleteFeeAttrInfoListener extends AbstractFeeAttrBusinessServiceDat
                     }
                 }
             }
-        }
+
 
 
     }

@@ -1,11 +1,11 @@
 package com.java110.community.dao.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.java110.community.dao.ICommunityServiceDao;
+import com.java110.core.base.dao.BaseServiceDao;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.exception.DAOException;
 import com.java110.utils.util.DateUtil;
-import com.java110.community.dao.ICommunityServiceDao;
-import com.java110.core.base.dao.BaseServiceDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -355,18 +355,18 @@ public class CommunityServiceDaoImpl extends BaseServiceDao implements ICommunit
      * @return 小区信息
      * @throws DAOException
      */
-    public Map getBusinessCommunityMember(Map info) throws DAOException {
+    public List<Map> getBusinessCommunityMember(Map info) throws DAOException {
         logger.debug("查询小区成员加入信息 入参 info : {}", info);
 
         List<Map> businessCommunityMembers = sqlSessionTemplate.selectList("communityServiceDaoImpl.getBusinessCommunityMember", info);
         if (businessCommunityMembers == null || businessCommunityMembers.size() == 0) {
             return null;
         }
-        if (businessCommunityMembers.size() > 1) {
-            throw new DAOException(ResponseConstant.RESULT_PARAM_ERROR, "根据条件查询有多条数据,数据异常，请检查：businessCommunityMember，" + JSONObject.toJSONString(info));
-        }
+//        if (businessCommunityMembers.size() > 1) {
+//            throw new DAOException(ResponseConstant.RESULT_PARAM_ERROR, "根据条件查询有多条数据,数据异常，请检查：businessCommunityMember，" + JSONObject.toJSONString(info));
+//        }
 
-        return businessCommunityMembers.get(0);
+        return businessCommunityMembers;
     }
 
     /**
@@ -377,7 +377,7 @@ public class CommunityServiceDaoImpl extends BaseServiceDao implements ICommunit
      * @return 小区信息
      * @throws DAOException
      */
-    public Map getCommunityMember(Map info) throws DAOException {
+    public List<Map> getCommunityMember(Map info) throws DAOException {
         logger.debug("查询小区成员加入信息 入参 info : {}", info);
 
         List<Map> memberCommunitys = sqlSessionTemplate.selectList("communityServiceDaoImpl.getCommunityMember", info);
@@ -388,7 +388,7 @@ public class CommunityServiceDaoImpl extends BaseServiceDao implements ICommunit
             throw new DAOException(ResponseConstant.RESULT_PARAM_ERROR, "根据条件查询有多条数据,数据异常，请检查：getCommunityMember，" + JSONObject.toJSONString(info));
         }
 
-        return memberCommunitys.get(0);
+        return memberCommunitys;
     }
 
     /**
@@ -436,27 +436,29 @@ public class CommunityServiceDaoImpl extends BaseServiceDao implements ICommunit
 
     /**
      * 查询小区信息（instance）
+     *
      * @param info bId 信息
      * @return List<Map>
      * @throws DAOException DAO异常
      */
     @Override
     public List<Map> getCommunityInfoNew(Map info) throws DAOException {
-        logger.debug("查询小区信息 入参 info : {}",info);
+        logger.debug("查询小区信息 入参 info : {}", info);
 
-        List<Map> businessCommunityInfos = sqlSessionTemplate.selectList("communityServiceDaoImpl.getCommunityInfoNew",info);
+        List<Map> businessCommunityInfos = sqlSessionTemplate.selectList("communityServiceDaoImpl.getCommunityInfoNew", info);
 
         return businessCommunityInfos;
     }
 
     /**
      * 查询小区数量
+     *
      * @param info 小区信息
      * @return 小区数量
      */
     @Override
     public int queryCommunitysCount(Map info) {
-        logger.debug("查询小区数据 入参 info : {}",info);
+        logger.debug("查询小区数据 入参 info : {}", info);
 
         List<Map> businessCommunityInfos = sqlSessionTemplate.selectList("communityServiceDaoImpl.queryCommunitysCount", info);
         if (businessCommunityInfos.size() < 1) {
@@ -465,4 +467,17 @@ public class CommunityServiceDaoImpl extends BaseServiceDao implements ICommunit
 
         return Integer.parseInt(businessCommunityInfos.get(0).get("count").toString());
     }
+
+    @Override
+    public int getCommunityAttrsCount(Map info) {
+        logger.debug("查询小区数据 入参 info : {}", info);
+
+        List<Map> businessCommunityInfos = sqlSessionTemplate.selectList("communityServiceDaoImpl.getCommunityAttrsCount", info);
+        if (businessCommunityInfos.size() < 1) {
+            return 0;
+        }
+
+        return Integer.parseInt(businessCommunityInfos.get(0).get("count").toString());
+    }
+
 }

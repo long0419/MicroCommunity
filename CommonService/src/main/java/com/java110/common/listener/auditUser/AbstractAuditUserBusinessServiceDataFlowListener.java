@@ -3,7 +3,7 @@ package com.java110.common.listener.auditUser;
 import com.alibaba.fastjson.JSONObject;
 import com.java110.common.dao.IAuditUserServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
@@ -79,6 +79,12 @@ public abstract class AbstractAuditUserBusinessServiceDataFlowListener extends A
 
         currentAuditUserInfo.put("operate", StatusConstant.OPERATE_DEL);
         getAuditUserServiceDaoImpl().saveBusinessAuditUserInfo(currentAuditUserInfo);
+
+        for(Object key : currentAuditUserInfo.keySet()) {
+            if(businessAuditUser.get(key) == null) {
+                businessAuditUser.put(key.toString(), currentAuditUserInfo.get(key));
+            }
+        }
     }
 
 

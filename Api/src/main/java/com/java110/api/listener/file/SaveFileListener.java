@@ -6,13 +6,9 @@ import com.java110.core.annotation.Java110Listener;
 import com.java110.core.context.DataFlowContext;
 import com.java110.core.factory.GenerateCodeFactory;
 import com.java110.core.smo.file.IFileInnerServiceSMO;
-import com.java110.core.smo.service.IServiceInnerServiceSMO;
 import com.java110.dto.file.FileDto;
-import com.java110.dto.service.ServiceDto;
-import com.java110.event.service.api.ServiceDataFlowEvent;
-import com.java110.utils.constant.ResponseConstant;
+import com.java110.core.event.service.api.ServiceDataFlowEvent;
 import com.java110.utils.constant.ServiceCodeServiceConstant;
-import com.java110.utils.exception.ListenerExecuteException;
 import com.java110.utils.util.Assert;
 import com.java110.utils.util.BeanConvertUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,15 +44,10 @@ public class SaveFileListener extends AbstractServiceApiListener {
 
         fileDto.setFileId(GenerateCodeFactory.getGeneratorId(GenerateCodeFactory.CODE_PREFIX_file_id));
 
-        int count = fileInnerServiceSMOImpl.saveFile(fileDto);
-
-
-        if (count < 1) {
-            throw new ListenerExecuteException(ResponseConstant.RESULT_CODE_ERROR, "保存数据失败");
-        }
+        String fileName = fileInnerServiceSMOImpl.saveFile(fileDto);
 
         JSONObject outParam = new JSONObject();
-        outParam.put("fileId", fileDto.getFileId());
+        outParam.put("fileId", fileName);
 
         ResponseEntity<String> responseEntity = new ResponseEntity<String>(outParam.toJSONString(), HttpStatus.OK);
 

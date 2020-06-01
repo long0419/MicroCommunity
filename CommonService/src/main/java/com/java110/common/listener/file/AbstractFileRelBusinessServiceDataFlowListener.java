@@ -3,7 +3,7 @@ package com.java110.common.listener.file;
 import com.alibaba.fastjson.JSONObject;
 import com.java110.common.dao.IFileRelServiceDao;
 import com.java110.entity.center.Business;
-import com.java110.event.service.AbstractBusinessServiceDataFlowListener;
+import com.java110.core.event.service.AbstractBusinessServiceDataFlowListener;
 import com.java110.utils.constant.ResponseConstant;
 import com.java110.utils.constant.StatusConstant;
 import com.java110.utils.exception.ListenerExecuteException;
@@ -79,6 +79,11 @@ public abstract class AbstractFileRelBusinessServiceDataFlowListener extends Abs
 
         currentFileRelInfo.put("operate", StatusConstant.OPERATE_DEL);
         getFileRelServiceDaoImpl().saveBusinessFileRelInfo(currentFileRelInfo);
+        for(Object key : currentFileRelInfo.keySet()) {
+            if(businessFileRel.get(key) == null) {
+                businessFileRel.put(key.toString(), currentFileRelInfo.get(key));
+            }
+        }
     }
 
 
